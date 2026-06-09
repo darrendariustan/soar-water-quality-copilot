@@ -152,19 +152,29 @@ Part 9: Prompt Engineering and Hub-and-Spoke Orchestration
 
 Part 10: Streaming UI Sidebar & Human-in-the-Loop Integration
 
-[ ] Implement a collapsible conversational chat sidebar in the application layout.
+[ ] Keep the conversational chat assistant as a collapsible overlay for easier integration.
 
-[ ] Use streaming responses to stream the Education Agent's explanations and responses.
+[ ] Use Server-Sent Events (SSE) streaming to stream the Education Agent's explanations and responses.
 
-[ ] Implement operator review controls: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the database tables (local PostgreSQL for MVP, Amazon RDS for production).
+[ ] Implement operator review controls directly within the Diagnosis Advice Panel: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the database tables (local PostgreSQL for MVP, Amazon RDS for production).
 
-[ ] Implement CV tool divergence/failure handling: If the computer vision module fails to detect colors due to poor lighting, catch the exception and fall back to manual parameter inputs with an alert banner.
+[x] Implement CV tool divergence/failure handling: (Skipped as Parts 1 to 9 are robust).
 
 - Judging Criteria Alignment: Maps to Human-in-the-Loop, Failure Handling, and Demo & Presentation by providing interactive control features, streaming outputs, and solver robustness.
-- Success Criteria: Smooth, token-by-token sidebar text streaming and operational override controls without UI blocking or crashes.
-- Tests: Run integration tests to confirm the app boots, executes scenarios, updates database records, handles CV/API failures, and streams conversational text without runtime failures.
+- Success Criteria: Smooth, token-by-token chat streaming and operational override controls without UI blocking or crashes.
+- Tests: Run integration tests to confirm the app boots, executes scenarios, updates database records, and streams conversational text without runtime failures.
 
-Part 11: Final Production Deployment
+Part 11: Context-Aware and Agentic UI Chat Assistant
+
+[ ] Pass Dashboard Context to the Chatbot: Pass the current `WaterTestResult` down to the `ChatAssistant` and include it in the `ChatMessageRequest` to provide context to the LLM.
+
+[ ] Enable Agentic UI Control: Instruct the LLM to output `[UPDATE_PARAMS: {"key": value}]` when parameter adjustments are needed, parse this from the SSE stream, and trigger `onUpdateParams` to instantly re-evaluate the dashboard without page reload.
+
+- Judging Criteria Alignment: Maps to Human-in-the-Loop, Autonomy & Decision-Making, and Agent Overview by allowing the agent to read current UI state and trigger functional UI updates based on conversational intent.
+- Success Criteria: Chatbot accurately answers questions about the active water sample, and automatically adjusts the UI parameters when asked to do so.
+- Tests: Test scenario context awareness via text prompts. Test parameter updates and verify the dashboard successfully runs the pipeline with new parameters.
+
+Part 12: Final Production Deployment
 
 [ ] Package the FastAPI backend and LangGraph agents into a production Docker image and push to Amazon ECR.
 
