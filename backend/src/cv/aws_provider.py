@@ -1,8 +1,9 @@
 """
-Rekognition-based provider for CV analysis.
-Replaces the local OpenCV colour extraction step with Amazon Rekognition
-detect_image_properties, while reusing the existing chart-matching logic.
+AWS Bedrock vision provider for CV analysis.
+Uses Claude Haiku (vision) via Bedrock to analyse test strip images and water samples.
+Returns the same Pydantic models as the local OpenCV provider — drop-in replacement.
 """
+import base64
 import json
 import os
 from pathlib import Path
@@ -12,16 +13,7 @@ import boto3
 import cv2
 import numpy as np
 
-from .engine import (
-    _DEFAULT_CHART,
-    _PARAM_MESSAGES,
-    _WARNINGS,
-    _BOILING_RESISTANT_PARAMS,
-    _risk_level_to_category,
-    load_image,
-    match_colour_to_chart,
-    _detect_glare,
-)
+from .engine import _DEFAULT_CHART, _WARNINGS, load_image
 from .models import (
     BoilingRiskFlag,
     ImageQuality,
@@ -32,68 +24,113 @@ from .models import (
     WaterSampleResult,
 )
 
-_GLARE_RGB_THRESHOLD = 240
+_BEDROCK_MODEL = os.getenv(
+    "BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+)
+_BEDROCK_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 
-# Labels from Rekognition that suggest turbidity / particles
-_CLOUDY_LABELS = {"Fog", "Haze", "Mist", "Smoke", "Pollution"}
-_PARTICLE_LABELS = {"Dust", "Powder", "Sand", "Debris", "Dirt"}
+_STRIP_SYSTEM_PROMPT = """You are a water quality test strip analyser. You will be given:
+1. An image of a water test strip
+2. A JSON reference chart with expected parameter names and colour entries
+
+Analyse the image carefully. For each parameter in the chart, identify the colour in the
+corresponding zone of the strip and match it to the closest chart entry.
+
+Return ONLY a valid JSON object — no prose, no markdown fences. Schema:
+{
+  "parameters": [
+    {
+      "name": "string",
+      "estimated_value": "string",
+      "unit": "string",
+      "risk_level": "low|neutral|warning|critical",
+      "matched_rgb": [R, G, B],
+      "matched_hsv": [H, S, V],
+      "confidence": 0.0-1.0,
+      "colour_distance": 0.0-441.0
+    }
+  ],
+  "image_quality": {
+    "brightness": "low|acceptable|high",
+    "blur": "low|medium|high",
+    "lighting_warning": true|false,
+    "glare_warning": true|false
+  },
+  "notes": "optional short observation"
+}
+
+Rules:
+- Never say the water is safe or unsafe to drink.
+- Base confidence on how closely the strip colour matches the chart entry.
+- If the image is blurry or poorly lit, set lighting_warning or glare_warning accordingly.
+- colour_distance is a 0-441 scale (0 = perfect match, 441 = maximum possible distance)."""
+
+_SAMPLE_SYSTEM_PROMPT = """You are a water clarity analyser. Examine the water sample image.
+
+Return ONLY a valid JSON object — no prose, no markdown fences. Schema:
+{
+  "clarity": "clear|slightly_cloudy|cloudy|opaque",
+  "colour": "colourless|slightly_yellow|slightly_brown|green|other",
+  "visible_particles": true|false,
+  "overall_confidence": 0.0-1.0
+}
+
+Rules:
+- Never say the water is safe or unsafe to drink.
+- Base confidence on image quality and how clear the water appearance is."""
+
+_BOILING_RESISTANT = {"nitrate", "nitrite", "iron"}
+_PARAM_MESSAGES = {
+    "nitrate": "Boiling does not remove nitrate. Do not treat boiling as sufficient.",
+    "nitrite": "Boiling does not remove nitrite. Seek alternative water sources if elevated.",
+    "iron": "High iron may indicate corrosion or contamination. Boiling does not remove iron.",
+    "pH": "Extreme pH may indicate chemical contamination.",
+    "free_chlorine": "High chlorine may indicate over-treatment. Low chlorine may indicate microbial risk.",
+    "hardness": "Water hardness is generally not a direct health risk at moderate levels.",
+    "turbidity": "Turbid water should be settled or filtered before treatment.",
+}
 
 
-def _get_rekognition_client():
-    return boto3.client(
-        "rekognition",
-        region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
-    )
+def _bedrock_client():
+    return boto3.client("bedrock-runtime", region_name=_BEDROCK_REGION)
 
 
-def _encode_jpeg(img: np.ndarray) -> bytes:
+def _encode_image_b64(img: np.ndarray) -> str:
     _, buf = cv2.imencode(".jpg", img)
-    return buf.tobytes()
+    return base64.standard_b64encode(buf.tobytes()).decode("utf-8")
 
 
-def _crop_band(img: np.ndarray, idx: int, total: int) -> np.ndarray:
-    h = img.shape[0]
-    band_h = h // total
-    y0 = idx * band_h
-    y1 = y0 + band_h if idx < total - 1 else h
-    return img[y0:y1, :]
+def _invoke(client, system: str, user_text: str, image_b64: str) -> dict:
+    body = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1024,
+        "system": system,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": image_b64}},
+                    {"type": "text", "text": user_text},
+                ],
+            }
+        ],
+    }
+    resp = client.invoke_model(modelId=_BEDROCK_MODEL, body=json.dumps(body))
+    text = json.loads(resp["body"].read())["content"][0]["text"]
+    return json.loads(text)
 
 
-def _rek_quality_to_image_quality(quality_dict: dict, img: np.ndarray) -> ImageQuality:
-    brightness_score = quality_dict.get("Brightness", 50)
-    sharpness_score = quality_dict.get("Sharpness", 50)
-
-    if brightness_score < 30:
-        brightness = "low"
-    elif brightness_score > 80:
-        brightness = "high"
-    else:
-        brightness = "acceptable"
-
-    blur = "high" if sharpness_score < 30 else ("medium" if sharpness_score < 60 else "low")
-    glare_warning = _detect_glare(img)
-    lighting_warning = brightness != "acceptable" or blur == "high" or glare_warning
-
-    return ImageQuality(
-        brightness=brightness,
-        blur=blur,
-        lighting_warning=lighting_warning,
-        glare_warning=glare_warning,
-    )
+def _risk_category(risk_level: str, param_name: str) -> str:
+    if risk_level == "critical":
+        return "treatment_required"
+    if risk_level == "warning" and param_name in _BOILING_RESISTANT:
+        return "boiling_resistant_warning"
+    if risk_level == "warning":
+        return "treatment_required"
+    return risk_level
 
 
-def _dominant_rgb_from_response(response: dict) -> list[int]:
-    props = response.get("ImagePropertiesResponse", {})
-    foreground = props.get("ForegroundColors", [])
-    dominant = props.get("DominantColors", [])
-    colors = foreground or dominant
-    if not colors:
-        return [128, 128, 128]
-    c = colors[0]
-    return [int(c.get("Red", 128)), int(c.get("Green", 128)), int(c.get("Blue", 128))]
-
-
-def analyse_test_strip_rekognition(
+def analyse_test_strip_bedrock(
     image_source: Union[np.ndarray, bytes],
     chart_path: Union[str, Path, None] = None,
 ) -> StripAnalysisResult:
@@ -106,73 +143,81 @@ def analyse_test_strip_rekognition(
     with open(chart_path) as f:
         chart = json.load(f)
 
-    client = _get_rekognition_client()
-
-    # Assess image quality from full image (one API call)
-    full_jpeg = _encode_jpeg(img)
-    quality_resp = client.detect_image_properties(
-        Image={"Bytes": full_jpeg},
-        Features=["IMAGE_QUALITY"],
+    # Build a compact chart summary for the prompt
+    param_summary = {
+        name: [{"value": e["value"], "unit": e["unit"], "risk_level": e["risk_level"]} for e in entries]
+        for name, entries in chart["parameters"].items()
+    }
+    user_text = (
+        f"Reference chart (kit: {chart['kit_id']}):\n{json.dumps(param_summary, indent=2)}\n\n"
+        "Analyse the test strip in the image against this chart."
     )
-    raw_quality = quality_resp.get("ImagePropertiesResponse", {}).get("Quality", {})
-    image_quality = _rek_quality_to_image_quality(raw_quality, img)
 
-    param_names = list(chart["parameters"].keys())
+    image_b64 = _encode_image_b64(img)
+    client = _bedrock_client()
+
+    try:
+        result = _invoke(client, _STRIP_SYSTEM_PROMPT, user_text, image_b64)
+    except Exception as exc:
+        # Graceful fallback: return low-confidence result with error warning
+        return StripAnalysisResult(
+            kit_id=chart["kit_id"],
+            parameters=[],
+            boiling_resistant_risk_flags=[],
+            overall_confidence=0.0,
+            image_quality=ImageQuality(brightness="acceptable", blur="low", lighting_warning=False, glare_warning=False),
+            warnings=list(_WARNINGS) + [f"Bedrock analysis unavailable: {exc}"],
+        )
+
     readings: list[ParameterReading] = []
     risk_flags: list[BoilingRiskFlag] = []
 
-    for idx, param_name in enumerate(param_names):
-        crop = _crop_band(img, idx, len(param_names))
-        crop_jpeg = _encode_jpeg(crop)
-
-        rek_resp = client.detect_image_properties(
-            Image={"Bytes": crop_jpeg},
-            Features=["DOMINANT_COLORS"],
-        )
-        sample_rgb = _dominant_rgb_from_response(rek_resp)
-
-        entries = chart["parameters"][param_name]
-        best_entry, confidence, colour_distance = match_colour_to_chart(sample_rgb, entries)
-
-        risk_level = best_entry.get("risk_level", "low")
-        risk_category = _risk_level_to_category(risk_level, param_name)
-        message = _PARAM_MESSAGES.get(param_name, "")
+    for p in result.get("parameters", []):
+        name = p["name"]
+        risk_level = p.get("risk_level", "low")
+        cat = _risk_category(risk_level, name)
+        message = _PARAM_MESSAGES.get(name, "")
 
         if risk_level in ("warning", "critical"):
-            risk_flags.append(
-                BoilingRiskFlag(
-                    parameter=param_name,
-                    risk_level=risk_level,
-                    reason=f"Estimated {param_name} result is {best_entry['value']} {best_entry['unit']}. {message}".strip(),
-                )
-            )
+            risk_flags.append(BoilingRiskFlag(
+                parameter=name,
+                risk_level=risk_level,
+                reason=f"Estimated {name} is {p['estimated_value']} {p.get('unit','')}. {message}".strip(),
+            ))
 
-        readings.append(
-            ParameterReading(
-                name=param_name,
-                estimated_value=best_entry["value"],
-                unit=best_entry["unit"],
-                risk_category=risk_category,
-                matched_colour=MatchedColour(rgb=best_entry["rgb"], hsv=best_entry["hsv"]),
-                colour_distance=colour_distance,
-                confidence=confidence,
-                message=message,
-            )
-        )
+        readings.append(ParameterReading(
+            name=name,
+            estimated_value=p["estimated_value"],
+            unit=p.get("unit", ""),
+            risk_category=cat,
+            matched_colour=MatchedColour(
+                rgb=p.get("matched_rgb", [128, 128, 128]),
+                hsv=p.get("matched_hsv", [0, 0, 128]),
+            ),
+            colour_distance=float(p.get("colour_distance", 0.0)),
+            confidence=float(p.get("confidence", 0.5)),
+            message=message,
+        ))
 
-    overall_confidence = round(sum(r.confidence for r in readings) / len(readings), 3)
+    iq = result.get("image_quality", {})
+    overall = round(sum(r.confidence for r in readings) / max(len(readings), 1), 3)
 
     return StripAnalysisResult(
         kit_id=chart["kit_id"],
         parameters=readings,
         boiling_resistant_risk_flags=risk_flags,
-        overall_confidence=overall_confidence,
-        image_quality=image_quality,
+        overall_confidence=overall,
+        image_quality=ImageQuality(
+            brightness=iq.get("brightness", "acceptable"),
+            blur=iq.get("blur", "low"),
+            lighting_warning=bool(iq.get("lighting_warning", False)),
+            glare_warning=bool(iq.get("glare_warning", False)),
+        ),
         warnings=list(_WARNINGS),
     )
 
 
-def classify_water_sample_rekognition(
+def classify_water_sample_bedrock(
     image_source: Union[np.ndarray, bytes],
 ) -> WaterSampleResult:
     if isinstance(image_source, (bytes, bytearray)):
@@ -180,63 +225,35 @@ def classify_water_sample_rekognition(
     else:
         img = image_source
 
-    client = _get_rekognition_client()
-    jpeg_bytes = _encode_jpeg(img)
+    image_b64 = _encode_image_b64(img)
+    client = _bedrock_client()
 
-    props_resp = client.detect_image_properties(
-        Image={"Bytes": jpeg_bytes},
-        Features=["DOMINANT_COLORS", "IMAGE_QUALITY"],
-    )
-    labels_resp = client.detect_labels(
-        Image={"Bytes": jpeg_bytes},
-        MinConfidence=60,
-    )
-
-    label_names = {label["Name"] for label in labels_resp.get("Labels", [])}
-    raw_quality = props_resp.get("ImagePropertiesResponse", {}).get("Quality", {})
-    brightness_score = raw_quality.get("Brightness", 50)
-
-    # Clarity: use brightness + turbidity-related label hints
-    if label_names & _CLOUDY_LABELS or brightness_score < 40:
-        clarity = "cloudy"
-    elif brightness_score < 65:
-        clarity = "slightly_cloudy"
-    elif brightness_score > 80:
-        clarity = "clear"
-    else:
-        clarity = "slightly_cloudy"
-
-    # Colour: use dominant color HSV hue
-    dominant_rgb = _dominant_rgb_from_response(props_resp)
-    pixel = np.uint8([[[dominant_rgb[2], dominant_rgb[1], dominant_rgb[0]]]])
-    hsv = cv2.cvtColor(pixel, cv2.COLOR_BGR2HSV)[0][0]
-    mean_h, mean_s = int(hsv[0]), int(hsv[1])
-
-    if mean_s < 20:
-        colour = "colourless"
-    elif 15 <= mean_h <= 35:
-        colour = "slightly_yellow"
-    elif 8 <= mean_h < 15:
-        colour = "slightly_brown"
-    elif 35 <= mean_h <= 85:
-        colour = "green"
-    else:
-        colour = "other"
-
-    visible_particles = bool(label_names & _PARTICLE_LABELS)
-
-    overall_confidence = min(raw_quality.get("Sharpness", 50) / 100, 1.0)
-    overall_confidence = round(overall_confidence, 3)
+    try:
+        result = _invoke(client, _SAMPLE_SYSTEM_PROMPT, "Analyse the water sample in this image.", image_b64)
+    except Exception as exc:
+        return WaterSampleResult(
+            appearance=WaterAppearance(clarity="clear", colour="colourless", visible_particles=False),
+            overall_confidence=0.0,
+            warnings=[
+                "Visual appearance alone cannot confirm whether water is safe to drink.",
+                f"Bedrock analysis unavailable: {exc}",
+            ],
+        )
 
     return WaterSampleResult(
         appearance=WaterAppearance(
-            clarity=clarity,
-            colour=colour,
-            visible_particles=visible_particles,
+            clarity=result.get("clarity", "clear"),
+            colour=result.get("colour", "colourless"),
+            visible_particles=bool(result.get("visible_particles", False)),
         ),
-        overall_confidence=overall_confidence,
+        overall_confidence=float(result.get("overall_confidence", 0.5)),
         warnings=[
             "Visual appearance alone cannot confirm whether water is safe to drink.",
             "Cloudy water should be settled or filtered before boiling, but boiling does not remove chemical contaminants.",
         ],
     )
+
+
+# Expose under the same names the server imports
+analyse_test_strip_rekognition = analyse_test_strip_bedrock
+classify_water_sample_rekognition = classify_water_sample_bedrock
