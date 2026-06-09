@@ -89,22 +89,29 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
 Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
-[ ] Create UI controls (scenario triggers/dropdowns) in the app to trigger pre-configured "Water Quality Scenarios" (e.g., Safe Water, Microbiological Outbreak, Chemical Contamination) to contrast normal operations against anomalies.
+[ ] Add scenario controls to the frontend (backend/src/static/index.html) that load pre-configured "Water Quality Scenarios" (e.g., Safe Water, Microbiological/Turbidity Concern, Chemical/Heavy-Metal Contamination) from canned sample results, so the demo can contrast normal readings against anomalies without needing a live photo each time.
 
-[ ] Implement the orchestration flow upon scenario trigger:
-    1. UI scenario trigger or image upload -> `master_agent.py`.
-    2. `master_agent.py` invokes `cv_agent.py` (via `cv_tool.py`) to extract parameters.
-    3. `master_agent.py` delegates to `water_quality_agent.py` to identify risks.
-    4. `master_agent.py` coordinates with `aws_retrieval_agent.py` to fetch stored safety guides.
-    5. If details are missing, `master_agent.py` activates `exa_crawl_agent.py` to query Exa API.
-    6. `master_agent.py` executes `treatment_guidance_agent.py` and `safety_agent.py` to produce safety warnings/guidelines.
-    7. `master_agent.py` commands `community_reporting_agent.py` to store anonymized analytics data.
+[ ] Implement the CV submission orchestration flow, centred on process_submission() in backend/src/cv/submission_handler.py:
 
-[ ] Update the dashboard elements dynamically on alert triggers, shifting the theme from safe primary blue/green to warning/danger (orange/red).
+1. User uploads 1-3 images in the UI -> POST /cv/submissions (backend/src/main.py). 
 
-- Judging Criteria Alignment: Maps to Human-in-the-Loop, Orchestration, and Story Arc Alignment by allowing the presenter/operator to force anomalies and observe the live multi-agent reaction.
-- Success Criteria: Toggling the demo switch shifts the interface state smoothly from a standard profile to a warning/danger view with updated explanation panels and retrieval data.
-- Tests: Verify session state mutations and that the end-to-end data pipeline completes successfully without UI freezing.
+2. For each image, kit type is taken from the declared kit_types form field or inferred by kit_classifier.py (local heuristic or Bedrock). 
+
+3. Each image is routed to its processor: generic 16-in-1 strip (engine.py), heavy metals strip (heavy_metals_processor.py), or TDS meter (tds_processor.py). In AWS mode these call Bedrock Claude Haiku via aws_provider.py; in local mode they use OpenCV heuristics. 
+
+4. Per-image ImageResults are aggregated into a single SubmissionResult, including deduplicated combined_boiling_resistant_risk_flags (highest severity per parameter). 
+
+5. In AWS mode the result is persisted to DynamoDB via backend/src/db.py (save_submission) and is retrievable through GET /cv/results/{submission_id}. 
+
+6. The CV module deliberately stops at readings, confidence scores, and boiling-resistant risk flags; it never declares water safe or unsafe. Final guidance is handed off to the downstream Water Quality and Treatment agents.
+
+[ ] Make the results UI react to risk: shift result cards and banners by risk_category and boiling-risk severity - neutral/low readings render in the primary Water Blue (#209dd7), treatment_required/warning shift to amber, and critical/boiling-resistant flags shift to red with a prominent warning banner.
+
+- Judging Criteria Alignment: Maps to Orchestration, Human-in-the-Loop, and Story Arc Alignment by letting the presenter force scenarios and observe the multi-image CV pipeline react end to end.
+
+- Success Criteria: Selecting a scenario or uploading images produces a structured SubmissionResult, persists it (AWS mode), and the dashboard smoothly shifts from a normal profile to a warning/danger view with updated readings and risk flags.
+
+- Tests: tests/cv/test_submission.py already covers process_submission() routing, aggregation, and combined-flag dedup; additionally verify scenario triggers render the correct risk state in the UI without freezing.
 
 Part 7: Exa API Integration via Web Crawl Agent
 
