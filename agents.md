@@ -79,4 +79,4 @@ Agents perform operations strictly by invoking isolated tools contained in `src/
 
 # Working documentation
 All documents for planning and executing this project will be in the docs/ directory.
-Please review the docs/PLAN.md document before proceeding.
+Please review the docs/plan.md document before proceeding.
