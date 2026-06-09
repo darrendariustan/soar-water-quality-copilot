@@ -10,58 +10,86 @@
   header { background: #032147; color: #fff; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
   header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; }
   header span { font-size: 0.8rem; opacity: 0.6; }
-  .container { max-width: 900px; margin: 32px auto; padding: 0 24px; }
+  .container { max-width: 960px; margin: 32px auto; padding: 0 24px; }
   .tabs { display: flex; gap: 0; border-bottom: 2px solid #dde3ec; margin-bottom: 28px; }
   .tab { padding: 10px 24px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #555; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
   .tab.active { color: #209dd7; border-bottom-color: #209dd7; }
   .tab:hover:not(.active) { color: #333; }
   .panel { display: none; }
   .panel.active { display: block; }
-  .upload-area { border: 2px dashed #c0cce0; border-radius: 10px; padding: 36px; text-align: center; background: #fff; cursor: pointer; transition: border-color 0.15s; }
+
+  /* Upload area */
+  .upload-area { border: 2px dashed #c0cce0; border-radius: 10px; padding: 28px; text-align: center; background: #fff; cursor: pointer; transition: border-color 0.15s; }
   .upload-area:hover, .upload-area.dragover { border-color: #209dd7; background: #f0f8ff; }
   .upload-area input[type=file] { display: none; }
-  .upload-area .icon { font-size: 2.5rem; margin-bottom: 10px; }
-  .upload-area p { color: #666; font-size: 0.9rem; }
-  .upload-area .label { color: #209dd7; font-weight: 600; cursor: pointer; }
-  #preview-strip, #preview-sample { max-height: 180px; border-radius: 8px; margin-top: 14px; display: none; object-fit: contain; }
-  .btn { display: inline-block; margin-top: 20px; padding: 10px 32px; background: #209dd7; color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .upload-area .icon { font-size: 2rem; margin-bottom: 8px; }
+  .upload-area p { color: #666; font-size: 0.88rem; }
+  .upload-area .label { color: #209dd7; font-weight: 600; }
+  .preview-img { max-height: 140px; border-radius: 6px; margin-top: 10px; display: none; object-fit: contain; }
+
+  /* Image slots (submission tab) */
+  .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 18px; }
+  .slot-card { background: #fff; border: 1px solid #dde3ec; border-radius: 10px; padding: 16px; position: relative; }
+  .slot-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .slot-label { font-size: 0.85rem; font-weight: 600; color: #032147; }
+  .slot-remove { background: none; border: none; cursor: pointer; color: #aaa; font-size: 1rem; padding: 0 4px; }
+  .slot-remove:hover { color: #e03e2d; }
+  .kit-select { font-size: 0.8rem; padding: 4px 8px; border: 1px solid #c0cce0; border-radius: 5px; background: #f8fafc; color: #333; cursor: pointer; }
+  .add-slot-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; background: #f0f8ff; color: #209dd7; border: 1.5px dashed #209dd7; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .add-slot-btn:hover { background: #e0f3fc; }
+  .add-slot-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* Buttons */
+  .btn { display: inline-block; margin-top: 18px; padding: 10px 32px; background: #209dd7; color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
   .btn:hover { background: #1880b0; }
   .btn:disabled { background: #aaa; cursor: default; }
   .spinner { display: none; width: 22px; height: 22px; border: 3px solid #cde8f5; border-top-color: #209dd7; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 18px auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result cards */
   .result-section { margin-top: 28px; }
-  .headline { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-  .chip { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+  .submission-meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .image-card { background: #fff; border: 1px solid #dde3ec; border-radius: 10px; margin-bottom: 18px; overflow: hidden; }
+  .image-card-header { background: #f0f4fa; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid #dde3ec; }
+  .image-card-body { padding: 16px; }
+  .headline { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
   .chip-blue { background: #e0f3fc; color: #0e6896; }
   .chip-green { background: #e2f4e8; color: #1a6b34; }
   .chip-yellow { background: #fef9e7; color: #7a6000; }
   .chip-red { background: #fdecea; color: #8b1a1a; }
   .chip-grey { background: #edf0f4; color: #444; }
-  .banner { border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 0.85rem; line-height: 1.6; }
+  .chip-orange { background: #fff0e0; color: #8b3a00; }
+  .banner { border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 0.84rem; line-height: 1.6; }
   .banner-red { background: #fdecea; border-left: 4px solid #e03e2d; color: #6b1717; }
   .banner-yellow { background: #fffbea; border-left: 4px solid #f0c03a; color: #6b5000; }
-  .banner strong { display: block; margin-bottom: 4px; }
-  .params-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 18px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-  .params-table th { background: #032147; color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
-  .params-table td { padding: 9px 12px; border-bottom: 1px solid #eef1f5; vertical-align: middle; }
+  .banner-blue { background: #e8f4ff; border-left: 4px solid #209dd7; color: #0a3a5c; }
+  .banner strong { display: block; margin-bottom: 4px; font-size: 0.88rem; }
+  .params-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-bottom: 14px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .params-table th { background: #032147; color: #fff; padding: 9px 12px; text-align: left; font-weight: 500; }
+  .params-table td { padding: 8px 12px; border-bottom: 1px solid #eef1f5; vertical-align: middle; }
   .params-table tr:last-child td { border-bottom: none; }
-  .risk-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .risk-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.74rem; font-weight: 600; }
   .risk-low { background: #e2f4e8; color: #1a6b34; }
   .risk-neutral { background: #edf0f4; color: #444; }
   .risk-warning { background: #fef9e7; color: #7a6000; }
   .risk-boiling { background: #fff0e0; color: #8b3a00; }
   .risk-treatment { background: #fdecea; color: #8b1a1a; }
-  .colour-swatch { width: 20px; height: 20px; border-radius: 4px; display: inline-block; border: 1px solid rgba(0,0,0,0.15); vertical-align: middle; margin-right: 6px; }
-  .json-block { background: #1e2736; color: #c9d1d9; border-radius: 8px; padding: 16px; font-size: 0.78rem; line-height: 1.6; overflow-x: auto; white-space: pre; margin-top: 10px; max-height: 360px; overflow-y: auto; }
+  .tds-box { background: #f8faff; border: 1px solid #c5d8f0; border-radius: 8px; padding: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .tds-value { font-size: 2rem; font-weight: 700; color: #032147; }
+  .tds-unit { font-size: 1rem; color: #666; }
+  .colour-swatch { width: 18px; height: 18px; border-radius: 3px; display: inline-block; border: 1px solid rgba(0,0,0,0.15); vertical-align: middle; margin-right: 5px; }
+  .quality-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .appearance-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .json-block { background: #1e2736; color: #c9d1d9; border-radius: 8px; padding: 14px; font-size: 0.76rem; line-height: 1.6; overflow-x: auto; white-space: pre; margin-top: 8px; max-height: 340px; overflow-y: auto; }
   .json-key { color: #79c0ff; }
   .json-str { color: #a5d6ff; }
   .json-num { color: #f2cc60; }
   .json-bool { color: #ff7b72; }
-  details { margin-top: 14px; }
-  details summary { cursor: pointer; font-size: 0.85rem; color: #209dd7; font-weight: 600; padding: 4px 0; }
-  .quality-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-  .appearance-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  details { margin-top: 12px; }
+  details summary { cursor: pointer; font-size: 0.83rem; color: #209dd7; font-weight: 600; padding: 3px 0; }
   .error-box { background: #fdecea; border: 1px solid #e03e2d; border-radius: 8px; padding: 14px 18px; color: #6b1717; font-size: 0.9rem; margin-top: 16px; }
+  .mismatch-badge { font-size: 0.74rem; background: #fff0e0; color: #8b3a00; padding: 2px 7px; border-radius: 8px; margin-left: 6px; }
 </style>
 </head>
 <body>
@@ -71,28 +99,39 @@
 </header>
 <div class="container">
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('strip')">Test Strip</div>
-    <div class="tab" onclick="switchTab('sample')">Water Sample</div>
+    <div class="tab active" onclick="switchTab('submission')">Submission</div>
+    <div class="tab" onclick="switchTab('strip')">Test Strip (legacy)</div>
+    <div class="tab" onclick="switchTab('sample')">Water Sample (legacy)</div>
   </div>
 
-  <!-- Test Strip Panel -->
-  <div class="panel active" id="panel-strip">
+  <!-- ===== SUBMISSION PANEL ===== -->
+  <div class="panel active" id="panel-submission">
+    <div id="slots-grid" class="slots-grid"></div>
+    <button class="add-slot-btn" id="add-slot-btn" onclick="addSlot()">&#43; Add Image <span id="slot-count-label">(1 / 3)</span></button>
+    <br>
+    <button class="btn" onclick="analyseSubmission()">Analyse Submission</button>
+    <div class="spinner" id="spin-submission"></div>
+    <div id="result-submission" class="result-section"></div>
+  </div>
+
+  <!-- ===== TEST STRIP PANEL (legacy) ===== -->
+  <div class="panel" id="panel-strip">
     <div class="upload-area" id="drop-strip" onclick="document.getElementById('file-strip').click()"
          ondragover="event.preventDefault();this.classList.add('dragover')"
          ondragleave="this.classList.remove('dragover')"
          ondrop="handleDrop(event,'strip')">
       <div class="icon">&#127746;</div>
       <p>Drag and drop a test strip image, or <span class="label">browse</span></p>
-      <p style="font-size:0.78rem;color:#999;margin-top:6px">JPEG, PNG, WebP</p>
+      <p style="font-size:0.78rem;color:#999;margin-top:5px">JPEG, PNG, WebP</p>
       <input type="file" id="file-strip" accept="image/*" onchange="previewFile('strip')">
-      <img id="preview-strip" alt="preview">
+      <img id="preview-strip" class="preview-img" alt="preview">
     </div>
     <button class="btn" id="btn-strip" onclick="analyseStrip()">Analyse Strip</button>
     <div class="spinner" id="spin-strip"></div>
     <div id="result-strip" class="result-section"></div>
   </div>
 
-  <!-- Water Sample Panel -->
+  <!-- ===== WATER SAMPLE PANEL (legacy) ===== -->
   <div class="panel" id="panel-sample">
     <div class="upload-area" id="drop-sample" onclick="document.getElementById('file-sample').click()"
          ondragover="event.preventDefault();this.classList.add('dragover')"
@@ -100,9 +139,9 @@
          ondrop="handleDrop(event,'sample')">
       <div class="icon">&#128167;</div>
       <p>Drag and drop a water sample image, or <span class="label">browse</span></p>
-      <p style="font-size:0.78rem;color:#999;margin-top:6px">JPEG, PNG, WebP</p>
+      <p style="font-size:0.78rem;color:#999;margin-top:5px">JPEG, PNG, WebP</p>
       <input type="file" id="file-sample" accept="image/*" onchange="previewFile('sample')">
-      <img id="preview-sample" alt="preview">
+      <img id="preview-sample" class="preview-img" alt="preview">
     </div>
     <button class="btn" id="btn-sample" onclick="analyseSample()">Analyse Sample</button>
     <div class="spinner" id="spin-sample"></div>
@@ -111,43 +150,144 @@
 </div>
 
 <script>
+// ---------- Tab switching ----------
 function switchTab(t) {
-  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='strip')||(i===1&&t==='sample')));
-  document.querySelectorAll('.panel').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='strip')||(i===1&&t==='sample')));
+  const ids = ['submission','strip','sample'];
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', ids[i] === t));
+  document.querySelectorAll('.panel').forEach((el,i) => el.classList.toggle('active', ids[i] === t));
 }
 
+// ---------- Submission tab: dynamic slots ----------
+const KIT_LABELS = {
+  'generic_16_in_1': 'Generic 16-in-1 Strip',
+  'heavy_metals_strip': 'Heavy Metals Strip',
+  'tds_meter': 'TDS Meter',
+};
+let slotCount = 0;
+
+function addSlot() {
+  if (slotCount >= 3) return;
+  const idx = slotCount;
+  slotCount++;
+  updateSlotLabel();
+
+  const card = document.createElement('div');
+  card.className = 'slot-card';
+  card.id = `slot-card-${idx}`;
+  card.innerHTML = `
+    <div class="slot-header">
+      <span class="slot-label">Image ${idx + 1}</span>
+      ${idx > 0 ? `<button class="slot-remove" onclick="removeSlot(${idx})" title="Remove">&#10005;</button>` : ''}
+    </div>
+    <select class="kit-select" id="kit-${idx}">
+      <option value="">Auto-detect kit type</option>
+      <option value="generic_16_in_1">Generic 16-in-1 Strip</option>
+      <option value="heavy_metals_strip">Heavy Metals Strip</option>
+      <option value="tds_meter">TDS Meter</option>
+    </select>
+    <div class="upload-area" style="margin-top:10px" onclick="document.getElementById('file-${idx}').click()"
+         ondragover="event.preventDefault();this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleSlotDrop(event,${idx})">
+      <div class="icon">&#128247;</div>
+      <p>Tap or drag image here</p>
+      <input type="file" id="file-${idx}" accept="image/*" onchange="previewSlot(${idx})">
+      <img id="preview-${idx}" class="preview-img" alt="">
+    </div>`;
+  document.getElementById('slots-grid').appendChild(card);
+  document.getElementById('add-slot-btn').disabled = slotCount >= 3;
+}
+
+function removeSlot(idx) {
+  const card = document.getElementById(`slot-card-${idx}`);
+  if (card) card.remove();
+  slotCount--;
+  updateSlotLabel();
+  document.getElementById('add-slot-btn').disabled = slotCount >= 3;
+}
+
+function updateSlotLabel() {
+  document.getElementById('slot-count-label').textContent = `(${slotCount} / 3)`;
+}
+
+function previewSlot(idx) {
+  const f = document.getElementById(`file-${idx}`).files[0];
+  if (!f) return;
+  const img = document.getElementById(`preview-${idx}`);
+  img.src = URL.createObjectURL(f);
+  img.style.display = 'block';
+}
+
+function handleSlotDrop(e, idx) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const input = document.getElementById(`file-${idx}`);
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  previewSlot(idx);
+}
+
+async function analyseSubmission() {
+  const fd = new FormData();
+  const kitTypes = [];
+  let hasFile = false;
+
+  for (let i = 0; i < 3; i++) {
+    const fileInput = document.getElementById(`file-${i}`);
+    const kitSelect = document.getElementById(`kit-${i}`);
+    if (!fileInput) continue;
+    if (fileInput.files[0]) {
+      fd.append('files', fileInput.files[0]);
+      kitTypes.push(kitSelect ? (kitSelect.value || null) : null);
+      hasFile = true;
+    }
+  }
+
+  if (!hasFile) { alert('Please add at least one image.'); return; }
+  fd.append('kit_types', JSON.stringify(kitTypes));
+
+  setSubLoading(true);
+  try {
+    const res = await fetch('/cv/submissions', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) { renderSubError(data.detail || 'Server error'); return; }
+    renderSubmissionResult(data);
+  } catch(e) { renderSubError(e.message); }
+  finally { setSubLoading(false); }
+}
+
+function setSubLoading(on) {
+  document.querySelector('#panel-submission .btn').disabled = on;
+  document.getElementById('spin-submission').style.display = on ? 'block' : 'none';
+}
+
+// ---------- Legacy tab helpers ----------
 function previewFile(type) {
   const input = document.getElementById('file-' + type);
   const img = document.getElementById('preview-' + type);
-  if (input.files[0]) {
-    img.src = URL.createObjectURL(input.files[0]);
-    img.style.display = 'block';
-  }
+  if (input.files[0]) { img.src = URL.createObjectURL(input.files[0]); img.style.display = 'block'; }
 }
-
 function handleDrop(e, type) {
   e.preventDefault();
   document.getElementById('drop-' + type).classList.remove('dragover');
   const file = e.dataTransfer.files[0];
   if (!file) return;
-  const input = document.getElementById('file-' + type);
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  input.files = dt.files;
+  const dt = new DataTransfer(); dt.items.add(file);
+  document.getElementById('file-' + type).files = dt.files;
   previewFile(type);
 }
-
 function setLoading(type, on) {
   document.getElementById('btn-' + type).disabled = on;
   document.getElementById('spin-' + type).style.display = on ? 'block' : 'none';
 }
-
 async function analyseStrip() {
   const file = document.getElementById('file-strip').files[0];
   if (!file) { alert('Please select an image first.'); return; }
   setLoading('strip', true);
-  const fd = new FormData();
-  fd.append('file', file);
+  const fd = new FormData(); fd.append('file', file);
   try {
     const res = await fetch('/analyze/test-strip', { method: 'POST', body: fd });
     const data = await res.json();
@@ -156,13 +296,11 @@ async function analyseStrip() {
   } catch(e) { renderError('strip', e.message); }
   finally { setLoading('strip', false); }
 }
-
 async function analyseSample() {
   const file = document.getElementById('file-sample').files[0];
   if (!file) { alert('Please select an image first.'); return; }
   setLoading('sample', true);
-  const fd = new FormData();
-  fd.append('file', file);
+  const fd = new FormData(); fd.append('file', file);
   try {
     const res = await fetch('/analyze/water-sample', { method: 'POST', body: fd });
     const data = await res.json();
@@ -172,112 +310,155 @@ async function analyseSample() {
   finally { setLoading('sample', false); }
 }
 
+// ---------- Rendering helpers ----------
 function riskBadgeClass(cat) {
-  const m = { low:'risk-low', neutral:'risk-neutral', treatment_required:'risk-treatment', boiling_resistant_warning:'risk-boiling' };
-  return m[cat] || 'risk-neutral';
+  return {low:'risk-low',neutral:'risk-neutral',treatment_required:'risk-treatment',boiling_resistant_warning:'risk-boiling',warning:'risk-warning'}[cat] || 'risk-neutral';
 }
-
 function confChip(val) {
   const pct = Math.round(val * 100);
   const cls = pct >= 70 ? 'chip-green' : pct >= 40 ? 'chip-yellow' : 'chip-red';
   return `<span class="chip ${cls}">Confidence: ${pct}%</span>`;
 }
+function statusChip(s) {
+  const m = {processed:'chip-green',processed_with_warnings:'chip-yellow',partial:'chip-yellow',failed:'chip-red',error:'chip-red',unable_to_process:'chip-red'};
+  return `<span class="chip ${m[s]||'chip-grey'}">${s.replace(/_/g,' ')}</span>`;
+}
+function blurChip(b) { return `<span class="chip ${b==='low'?'chip-green':b==='medium'?'chip-yellow':'chip-red'}">Blur: ${b}</span>`; }
+function brightnessChip(b) { return `<span class="chip ${b==='acceptable'?'chip-green':'chip-yellow'}">Brightness: ${b}</span>`; }
+function swatch(rgb) { return `<span class="colour-swatch" style="background:rgb(${rgb[0]},${rgb[1]},${rgb[2]})"></span>`; }
 
-function blurChip(b) {
-  const cls = b === 'low' ? 'chip-green' : b === 'medium' ? 'chip-yellow' : 'chip-red';
-  return `<span class="chip ${cls}">Blur: ${b}</span>`;
+function qualityHtml(q) {
+  if (!q) return '';
+  return `<div class="quality-grid">
+    ${brightnessChip(q.brightness)}${blurChip(q.blur)}
+    ${q.lighting_warning?'<span class="chip chip-yellow">Lighting Warning</span>':''}
+    ${q.glare_warning?'<span class="chip chip-red">Glare Detected</span>':''}
+  </div>`;
 }
 
-function brightnessChip(b) {
-  const cls = b === 'acceptable' ? 'chip-green' : 'chip-yellow';
-  return `<span class="chip ${cls}">Brightness: ${b}</span>`;
+function warningsBannerHtml(warnings) {
+  if (!warnings || !warnings.length) return '';
+  return `<div class="banner banner-yellow"><strong>Warnings</strong>${warnings.map(w=>`<div>${w}</div>`).join('')}</div>`;
 }
 
-function swatch(rgb) {
-  return `<span class="colour-swatch" style="background:rgb(${rgb[0]},${rgb[1]},${rgb[2]})"></span>`;
+function riskFlagsBannerHtml(flags, title) {
+  if (!flags || !flags.length) return '';
+  let inner = flags.map(f => `<div><b>${f.parameter}</b> [${f.risk_level}]${f.source_image_id?` <span style="font-size:0.76rem;opacity:0.7">from ${f.source_image_id.slice(0,8)}…</span>`:''} &mdash; ${f.reason}</div>`).join('');
+  return `<div class="banner banner-red"><strong>${title || 'Boiling-Resistant Risk Detected'}</strong>${inner}</div>`;
 }
 
+function paramsTableHtml(params) {
+  if (!params || !params.length) return '';
+  let rows = params.map(p => `<tr>
+    <td><b>${p.name}</b>${p.message?`<br><span style="font-size:0.74rem;color:#888">${p.message}</span>`:''}</td>
+    <td>${p.estimated_value} ${p.unit}</td>
+    <td>${Math.round(p.confidence*100)}%</td>
+    <td><span class="risk-badge ${riskBadgeClass(p.risk_category)}">${p.risk_category.replace(/_/g,' ')}</span></td>
+    <td>${p.matched_colour?swatch(p.matched_colour.rgb)+`rgb(${p.matched_colour.rgb.join(',')})`:''}</td>
+    <td>${p.colour_distance??''}</td>
+  </tr>`).join('');
+  return `<table class="params-table">
+    <thead><tr><th>Parameter</th><th>Value</th><th>Conf.</th><th>Risk</th><th>Matched Colour</th><th>Dist.</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+function tdsBoxHtml(tds) {
+  if (!tds) return '';
+  const riskCls = {low:'chip-green',caution:'chip-yellow',warning:'chip-orange',high:'chip-red',unknown:'chip-grey'}[tds.risk_category] || 'chip-grey';
+  const valStr = tds.parsed_value !== null && tds.parsed_value !== undefined ? `${tds.parsed_value}` : '—';
+  const reviewBadge = tds.status === 'manual_review_required' ? '<span class="chip chip-yellow" style="margin-left:8px">Manual Review Required</span>' : '';
+  return `<div class="tds-box">
+    <div><div class="tds-value">${valStr} <span class="tds-unit">${tds.unit}</span></div>
+    <div style="font-size:0.8rem;color:#666;margin-top:2px">Detected text: "${tds.detected_text || '—'}"</div></div>
+    <div><span class="chip ${riskCls}">${tds.risk_category.replace(/_/g,' ')}</span>${reviewBadge}
+    <div style="font-size:0.8rem;color:#666;margin-top:6px">${tds.message}</div>
+    <div style="font-size:0.78rem;color:#aaa;margin-top:2px">Confidence: ${Math.round(tds.confidence*100)}%</div></div>
+  </div>`;
+}
+
+// ---------- Submission result renderer ----------
+function renderSubmissionResult(d) {
+  const el = document.getElementById('result-submission');
+  let html = `<div class="submission-meta">
+    <span class="chip chip-blue">Submission</span>
+    <span class="chip chip-grey" title="${d.submission_id}">${d.submission_id.slice(0,12)}…</span>
+    ${statusChip(d.status)}
+    <span class="chip chip-grey">${d.images_processed} image${d.images_processed!==1?'s':''} processed</span>
+  </div>`;
+
+  // Combined boiling flags across all images
+  if (d.combined_boiling_resistant_risk_flags && d.combined_boiling_resistant_risk_flags.length > 0) {
+    html += riskFlagsBannerHtml(d.combined_boiling_resistant_risk_flags, 'Combined Boiling-Resistant Risk (All Images)');
+  }
+
+  // Final module warning
+  html += `<div class="banner banner-blue"><strong>Module Notice</strong>${d.final_module_warning}</div>`;
+
+  // Per-image result cards
+  (d.results || []).forEach((ir, i) => {
+    const kitLabel = KIT_LABELS[ir.kit_type] || ir.kit_type;
+    const mismatch = ir.kit_type_mismatch ? `<span class="mismatch-badge">kit mismatch</span>` : '';
+    html += `<div class="image-card">
+      <div class="image-card-header">
+        <span style="font-weight:600">Image ${i+1}</span>
+        <span class="chip chip-blue">${kitLabel}</span>
+        ${mismatch}
+        ${statusChip(ir.processing_status)}
+        ${confChip(ir.overall_confidence)}
+        <span style="font-size:0.76rem;color:#888">${ir.image_id.slice(0,8)}…</span>
+      </div>
+      <div class="image-card-body">
+        ${riskFlagsBannerHtml(ir.boiling_resistant_risk_flags)}
+        ${warningsBannerHtml(ir.warnings)}
+        ${ir.kit_type === 'tds_meter' ? tdsBoxHtml(ir.tds_result) : paramsTableHtml(ir.parameters)}
+        ${qualityHtml(ir.image_quality)}
+        <details><summary>Raw JSON</summary><div class="json-block">${syntaxHighlight(ir)}</div></details>
+      </div>
+    </div>`;
+  });
+
+  html += `<details><summary>Full Submission JSON</summary><div class="json-block">${syntaxHighlight(d)}</div></details>`;
+  el.innerHTML = html;
+}
+
+// ---------- Legacy renderers ----------
 function renderStripResult(target, d) {
   const el = document.getElementById('result-' + target);
-  let html = '';
-
-  html += `<div class="headline">
+  let html = `<div class="headline">
     <span class="chip chip-blue">${d.image_type}</span>
     <span class="chip chip-grey">Kit: ${d.kit_id}</span>
     ${confChip(d.overall_confidence)}
   </div>`;
-
-  if (d.boiling_resistant_risk_flags && d.boiling_resistant_risk_flags.length > 0) {
-    html += `<div class="banner banner-red"><strong>Boiling-Resistant Risk Detected</strong>`;
-    d.boiling_resistant_risk_flags.forEach(f => {
-      html += `<div><b>${f.parameter}</b> [${f.risk_level}] &mdash; ${f.reason}</div>`;
-    });
-    html += `</div>`;
-  }
-
-  if (d.warnings && d.warnings.length > 0) {
-    html += `<div class="banner banner-yellow"><strong>Important Warnings</strong>`;
-    d.warnings.forEach(w => html += `<div>${w}</div>`);
-    html += `</div>`;
-  }
-
+  html += riskFlagsBannerHtml(d.boiling_resistant_risk_flags);
+  html += warningsBannerHtml(d.warnings);
   if (d.image_quality) {
     const q = d.image_quality;
-    html += `<div class="quality-grid">
-      ${brightnessChip(q.brightness)}
-      ${blurChip(q.blur)}
-      ${q.lighting_warning ? '<span class="chip chip-yellow">Lighting Warning</span>' : ''}
-      ${q.glare_warning ? '<span class="chip chip-red">Glare Detected</span>' : ''}
-    </div>`;
+    html += `<div class="quality-grid">${brightnessChip(q.brightness)}${blurChip(q.blur)}
+      ${q.lighting_warning?'<span class="chip chip-yellow">Lighting Warning</span>':''}
+      ${q.glare_warning?'<span class="chip chip-red">Glare Detected</span>':''}</div>`;
   }
-
-  html += `<table class="params-table">
-    <thead><tr><th>Parameter</th><th>Estimated Value</th><th>Confidence</th><th>Risk</th><th>Matched Colour</th><th>Distance</th></tr></thead>
-    <tbody>`;
-  (d.parameters || []).forEach(p => {
-    html += `<tr>
-      <td><b>${p.name}</b>${p.message ? `<br><span style="font-size:0.76rem;color:#888">${p.message}</span>` : ''}</td>
-      <td>${p.estimated_value} ${p.unit}</td>
-      <td>${Math.round(p.confidence * 100)}%</td>
-      <td><span class="risk-badge ${riskBadgeClass(p.risk_category)}">${p.risk_category.replace(/_/g,' ')}</span></td>
-      <td>${swatch(p.matched_colour.rgb)} rgb(${p.matched_colour.rgb.join(',')})</td>
-      <td>${p.colour_distance}</td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-
+  html += paramsTableHtml(d.parameters);
   html += `<details><summary>View raw JSON</summary><div class="json-block">${syntaxHighlight(d)}</div></details>`;
   el.innerHTML = html;
 }
-
 function renderSampleResult(target, d) {
   const el = document.getElementById('result-' + target);
-  let html = '';
-
-  html += `<div class="headline">
-    <span class="chip chip-blue">${d.image_type}</span>
-    ${confChip(d.overall_confidence)}
-  </div>`;
-
-  if (d.warnings && d.warnings.length > 0) {
-    html += `<div class="banner banner-yellow"><strong>Important Warnings</strong>`;
-    d.warnings.forEach(w => html += `<div>${w}</div>`);
-    html += `</div>`;
-  }
-
+  let html = `<div class="headline"><span class="chip chip-blue">${d.image_type}</span>${confChip(d.overall_confidence)}</div>`;
+  html += warningsBannerHtml(d.warnings);
   const ap = d.appearance;
   html += `<div class="appearance-grid">
     <span class="chip chip-grey">Clarity: ${ap.clarity.replace(/_/g,' ')}</span>
     <span class="chip chip-grey">Colour: ${ap.colour.replace(/_/g,' ')}</span>
-    <span class="chip ${ap.visible_particles ? 'chip-red' : 'chip-green'}">Particles: ${ap.visible_particles ? 'detected' : 'none'}</span>
+    <span class="chip ${ap.visible_particles?'chip-red':'chip-green'}">Particles: ${ap.visible_particles?'detected':'none'}</span>
   </div>`;
-
   html += `<details><summary>View raw JSON</summary><div class="json-block">${syntaxHighlight(d)}</div></details>`;
   el.innerHTML = html;
 }
-
 function renderError(target, msg) {
   document.getElementById('result-' + target).innerHTML = `<div class="error-box">Error: ${msg}</div>`;
+}
+function renderSubError(msg) {
+  document.getElementById('result-submission').innerHTML = `<div class="error-box">Error: ${msg}</div>`;
 }
 
 function syntaxHighlight(obj) {
@@ -289,6 +470,9 @@ function syntaxHighlight(obj) {
     return `<span class="${cls}">${match}</span>`;
   });
 }
+
+// Init: add first slot automatically
+addSlot();
 </script>
 </body>
 </html>
