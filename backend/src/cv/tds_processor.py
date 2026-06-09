@@ -109,7 +109,13 @@ def process_tds_bedrock(image_source: Union[np.ndarray, bytes]) -> TDSResult:
 
     try:
         resp = client.invoke_model(modelId=_BEDROCK_MODEL, body=json.dumps(body))
-        text = json.loads(resp["body"].read())["content"][0]["text"]
+        payload = json.loads(resp["body"].read())
+        text = payload["content"][0]["text"].strip()
+        if text.startswith("```"):
+            newline = text.find("\n")
+            text = text[newline + 1:] if newline != -1 else text[3:]
+            if text.rstrip().endswith("```"):
+                text = text[: text.rstrip().rfind("```")].strip()
         raw = json.loads(text)
     except Exception as exc:
         return TDSResult(

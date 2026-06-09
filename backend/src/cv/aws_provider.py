@@ -100,6 +100,17 @@ def _encode_image_b64(img: np.ndarray) -> str:
     return base64.standard_b64encode(buf.tobytes()).decode("utf-8")
 
 
+def _strip_fences(text: str) -> str:
+    """Remove markdown code fences that Claude sometimes adds despite instructions."""
+    text = text.strip()
+    if text.startswith("```"):
+        newline = text.find("\n")
+        text = text[newline + 1:] if newline != -1 else text[3:]
+        if text.rstrip().endswith("```"):
+            text = text[: text.rstrip().rfind("```")]
+    return text.strip()
+
+
 def _invoke(client, system: str, user_text: str, image_b64: str) -> dict:
     body = {
         "anthropic_version": "bedrock-2023-05-31",
@@ -116,7 +127,10 @@ def _invoke(client, system: str, user_text: str, image_b64: str) -> dict:
         ],
     }
     resp = client.invoke_model(modelId=_BEDROCK_MODEL, body=json.dumps(body))
-    text = json.loads(resp["body"].read())["content"][0]["text"]
+    raw = json.loads(resp["body"].read())
+    text = _strip_fences(raw["content"][0]["text"])
+    if not text:
+        raise ValueError("Bedrock returned an empty response")
     return json.loads(text)
 
 

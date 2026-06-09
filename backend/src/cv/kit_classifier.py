@@ -100,7 +100,13 @@ def classify_kit_bedrock(image_source: Union[np.ndarray, bytes]) -> tuple[str, f
 
     try:
         resp = client.invoke_model(modelId=_BEDROCK_MODEL, body=json.dumps(body))
-        text = json.loads(resp["body"].read())["content"][0]["text"]
+        payload = json.loads(resp["body"].read())
+        text = payload["content"][0]["text"].strip()
+        if text.startswith("```"):
+            newline = text.find("\n")
+            text = text[newline + 1:] if newline != -1 else text[3:]
+            if text.rstrip().endswith("```"):
+                text = text[: text.rstrip().rfind("```")].strip()
         result = json.loads(text)
         kit_type = result.get("kit_type", "unknown")
         confidence = float(result.get("confidence", 0.5))
