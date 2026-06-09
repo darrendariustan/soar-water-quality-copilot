@@ -1,69 +1,49 @@
 ### Proposed Scaffolding
 
 ```text
-soar-water-quality-agent/
-├── .env                                 # Secure environmental secrets (EXA_API_KEY, OPENAI_API_KEY, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-├── .gitignore                           # Excludes local virtual environments and environmental secrets
-├── agents.md                            # Master prompt and evaluation matrix answering criteria 1–9
-├── Dockerfile                           # Multi-stage container instruction using uv for instant deployment
-├── pyproject.toml                       # High-speed dependency configuration (torch, wntr, exa-py, boto3, pg8000)
-├── uv.lock                              # Deterministic dependency tree mapping to ensure parity
-├── README.md                            # Executive project overview and launch procedures
-├── requirements.txt                     # Standard fallback dependency matrix mapping
-│
-├── data/
-│   ├── raw/
-│   │   └── water_potability.csv         # Baseline CSV data tracking node potability telemetry
-│   ├── epanet/
-│   │   └── network.inp                  # Static EPANET water distribution network configuration file
-│   └── processed/                       # Cached matrices and cleaned execution sensor states
-│
-├── database/                            # Database schemas, migrations, and seed scripts
-│   ├── schema.sql                       # Schema definitions for Knowledge, Rule, User Test, and Community Risk tables
-│   └── seed_data.sql                    # Initial seed data for water safety rules and initial knowledge base
-│
-├── models/
-│   ├── potability_model.pkl             # Serialized classical ML classification model checkpoint
-│   └── weights.pth                      # Pre-trained PyTorch physics-informed neural network weights
-│
-├── src/
-│   ├── app.py                           # Single-page interactive Streamlit operator dashboard
-│   │
-│   ├── agents/                          # Specialized Multi-Agent Layer
-│   │   ├── master_agent.py              # Master Water Safety Agent coordinating sub-agents
-│   │   ├── cv_agent.py                  # Computer Vision Agent reading water images and test strips
-│   │   ├── interpretation_agent.py      # Water Quality Interpretation Agent mapping parameter risks
-│   │   ├── aws_retrieval_agent.py       # AWS Knowledge Retrieval Agent searching RDS and OpenSearch
-│   │   ├── exa_crawl_agent.py           # Exa Web Crawl Agent searching public sources for latest guidance
-│   │   ├── treatment_agent.py           # Treatment Guidance Agent recommending practical actions
-│   │   ├── community_agent.py           # Community Reporting Agent storing results and tracking area trends
-│   │   ├── education_agent.py           # Education Agent explaining water safety concepts in simple language
-│   │   └── safety_agent.py              # Safety and Compliance Agent preventing unsafe advice
-│   │
-│   ├── tools/                           # Modular Operational Tool Layer
-│   │   ├── aws_rds_tool.py              # Tool to interface with Amazon RDS PostgreSQL
-│   │   ├── aws_opensearch_tool.py       # Tool to interface with Amazon OpenSearch for vector embeddings
-│   │   ├── aws_s3_tool.py               # Tool to store raw documents, images, and source snapshots in S3
-│   │   ├── exa_tool.py                  # Exa Search/Crawl client wrapper
-│   │   ├── cv_tool.py                   # Computer vision processing utility for test kits
-│   │   ├── epanet_tool.py               # WNTR simulation wrapper interacting with the C-compiled binary
-│   │   └── ml_model_tool.py             # Handles local evaluation calls to potability_model.pkl
-│   │
-│   └── pipelines/                       # Compute Automation & Ingestion Pipelines
-│       ├── ingestion_pipeline.py        # Knowledge ingestion pipeline (crawling, extraction, review, storage)
-│       └── run_water_quality_scenario.py # Deterministic end-to-end pipeline simulating anomalies
-│
-├── notebooks/                           # Experimental Research & Prototyping Sandboxes
-│   ├── 01_train_potability_model.ipynb  # Exploratory data analysis and model training loops
-│   └── 02_epanet_water_age_simulation.ipynb # Prototyping workspace for WNTR hydraulic evaluation
-│
-├── scripts/                             # Containerization and Lifecycle Automation Tools
-│   ├── start-server.sh                  # Builds and spins up the local Docker container (Mac/Linux)
-│   ├── start-server.bat                 # Builds and spins up the local Docker container (Windows)
-│   ├── stop-server.sh                   # Gracefully deprovisions container infrastructure (Mac/Linux)
-│   └── stop-server.bat                  # Gracefully deprovisions container infrastructure (Windows)
-└── docs/
-    └── plan.md                          # Primary implementation roadmap mapped with phase criteria
+water-for-all/
+├── .env.example                # Blueprint for system keys (AWS, EXA, OPENAI/BEDROCK)
+├── .gitignore                  # Strict filters blocking environment secrets, caches, and logs
+├── agents.md                   # Master file defining the 9-agent orchestration system
+├── README.md                   # Minimal deployment guides and core architectural summary
+├── docs/
+│   ├── plan.md                 # Technical execution roadmap with phase-by-phase success criteria
+│   └── schema.json             # DB structures (Knowledge, Safety Rules, Results, Risk Tables)
+├── infra/                      # Infrastructure as Code (AWS CDK, Terraform, or CloudFormation)
+│   ├── aws_stack.tf            # Provisions S3, RDS PostgreSQL, OpenSearch, and API Gateway
+│   └── docker/
+│       ├── backend.Dockerfile  # Multi-stage production container utilizing uv package manager
+│       └── frontend.Dockerfile # Standardized deployment engine for the dashboard app
+├── frontend/                   # Web / Mobile user interface (Next.js or React Native)
+│   ├── package.json            # Client dependencies and build scripts
+│   └── src/                    # UI elements for image uploads and the community risk view
+└── backend/                    # Core Python multi-agent logic and analytics engine
+    ├── pyproject.toml          # Package spec handled via uv (boto3, opensearch-py, exa-py, pillow)
+    ├── uv.lock                 # Deterministic dependency tree locking execution layers
+    ├── data/                   # Reference engineering matrices and local mock parameters
+    │   ├── raw/                # Baseline test strip images and calibration cards
+    │   └── processed/          # Cleaned training sets or local transient configurations
+    └── src/
+        ├── main.py             # FastAPI entrypoint mapping routes to AWS API Gateway targets
+        ├── agents/             # The 9 specified operational multi-agent blueprints
+        │   ├── master_agent.py          # Central orchestrator handling final user responses
+        │   ├── cv_agent.py              # Vision engine processing strips and clarity
+        │   ├── interpretation_agent.py  # Classifies parameters into safety threat tiers
+        │   ├── aws_retrieval_agent.py   # Runs semantic vector search queries on OpenSearch
+        │   ├── exa_crawl_agent.py       # Dispatches live web crawl alerts for missing data
+        │   ├── treatment_agent.py       # Formulates purification / boiling action items
+        │   ├── reporting_agent.py       # Analyzes regional trends and aggregates hotspots
+        │   ├── education_agent.py       # Translates complex chemistry into clear guidelines
+        │   └── safety_agent.py          # Hard gate blocking toxic advice (e.g., boiling chemical contamination)
+        ├── tools/              # Discrete infrastructure instruments executed by agents
+        │   ├── s3_client.py             # Manages file streaming for image snapshots
+        │   ├── rds_client.py            # Executes relational SQL queries against PostgreSQL
+        │   ├── opensearch_client.py     # Converts text to embeddings and performs RAG lookup
+        │   ├── cv_engine.py             # Evaluates RGB test strip color-matching vectors
+        │   └── exa_search.py            # Interfaces with the Exa Search and Retrieval API
+        └── pipelines/          # Asynchronous data processing jobs
+            ├── ingest_knowledge.py      # Extract, deduplicate, filter, and tag crawled sources
+            └── aggregate_analytics.py   # Processes regional failures for local NGO reports
 ```
 
 ---
