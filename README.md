@@ -144,6 +144,33 @@ graph TD
 
 The database stores both structured and unstructured knowledge.
 
+#### Current Local MVP Schema (hackathon-db-1)
+
+For the local MVP, knowledge embeddings and structured metadata are stored directly in PostgreSQL using the `langchain_postgres` pgvector integration:
+
+```mermaid
+erDiagram
+    %% The main PostgreSQL Database Container
+    DATABASE ||--o{ LANGCHAIN_PG_COLLECTION : contains
+    DATABASE ||--o{ LANGCHAIN_PG_EMBEDDING : contains
+
+    LANGCHAIN_PG_COLLECTION {
+        uuid uuid PK
+        string name "water_knowledge"
+        jsonb cmetadata "null"
+    }
+
+    LANGCHAIN_PG_EMBEDDING {
+        uuid uuid PK
+        uuid collection_id FK "Maps to water_knowledge"
+        vector embedding "1536-dimensional array (from OpenAI)"
+        string document "Raw text of the guidance (Title, Summary, Steps)"
+        jsonb cmetadata "Metadata payload (Sources, Steps, Types)"
+    }
+```
+
+#### Full Deployment Schema
+
 ```mermaid
 erDiagram
     KNOWLEDGE {

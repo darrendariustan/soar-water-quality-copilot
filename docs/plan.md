@@ -63,13 +63,13 @@ Part 4: WaterForAll Dashboard Layout
 
 Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
-[ ] Implement isolated tools inside `src/tools/`:
+[x] Implement isolated tools inside `src/backend/tools/`:
     - `cv_tool.py`: Wraps Amazon Rekognition API calls for analysis of test strip colors and water clarity.
     - `aws_db_tool.py`: Integrates with the local Docker PostgreSQL container to mock Amazon RDS structured tables (Knowledge, Rule, User Test Result, Community Risk).
-    - `rag_search_tool.py`: Performs vector search or semantic matching against knowledge tables.
+    - `rag_search_tool.py`: Performs pgvector semantic similarity search against the PostgreSQL knowledge table using OpenAIEmbeddings.
     - `exa_crawl_tool.py`: Performs targeted search/crawls against the Exa API for trusted sources.
 
-[ ] Implement specialized, autonomous agents inside `src/agents/` driven by **LangGraph** for orchestration:
+[x] Implement specialized, autonomous agents inside `src/backend/agents/` driven by **LangGraph** for orchestration:
     - `master_agent.py`: The LangGraph supervisor that coordinates the agents, aggregates parameters, and compiles final recommendations.
     - `cv_agent.py`: LangGraph node to read the water test kit and clarity via `cv_tool.py`.
     - `water_quality_agent.py`: Maps parameter readings (pH, chlorine, turbidity, nitrate, nitrite, hardness, iron) to risk categories.
@@ -80,8 +80,8 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
     - `education_agent.py`: Explains concepts in simple terms.
     - `safety_agent.py`: Inspects advice to prevent hazardous guidelines (e.g. advising boiling for chemical contaminants).
 
-[ ] Implement compute automation pipelines inside `src/pipelines/`:
-    - `ingest_knowledge.py`: Ingests and embeds crawling results into PostgreSQL.
+[x] Implement compute automation pipelines inside `src/backend/pipelines/`:
+    - `ingest_knowledge.py`: Parses the local JSON knowledge bases (e.g. `guidance.json`, `sources.json`), embeds them using OpenAIEmbeddings, and ingests them into the pgvector PostgreSQL tables. It will also be capable of embedding raw Exa crawling results into PostgreSQL.
 
 - Judging Criteria Alignment: Maps to Agent Overview, Autonomy & Decision-Making, Actions & Tool Use, and Compute Automation Boundaries by building decoupled agents, isolated tools, and execution pipelines.
 - Success Criteria: Specialist agents successfully interact with tools and pipelines, communicating with the Master Agent using structured JSON control payloads.
@@ -89,19 +89,19 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
 Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
-[ ] Add scenario controls to the frontend (backend/src/static/index.html) that load pre-configured "Water Quality Scenarios" (e.g., Safe Water, Microbiological/Turbidity Concern, Chemical/Heavy-Metal Contamination) from canned sample results, so the demo can contrast normal readings against anomalies without needing a live photo each time.
+[ ] Add manual scenario controls (e.g., sliders or presets) to the Next.js React frontend to load pre-configured "Water Quality Scenarios" (e.g., Safe Water, Microbiological/Turbidity Concern, Chemical/Heavy-Metal Contamination) from canned sample results, so the demo can contrast normal readings against anomalies without needing a live photo each time.
 
-[ ] Implement the CV submission orchestration flow, centred on process_submission() in backend/src/cv/submission_handler.py:
+[ ] Implement the CV submission orchestration flow, centred on `process_submission()` in `src/backend/cv/submission_handler.py`:
 
-1. User uploads 1-3 images in the UI -> POST /cv/submissions (backend/src/main.py). 
+1. User uploads 1-3 images in the UI (or uses manual scenario controls) -> POST `/cv/submissions` (`src/backend/main.py`). 
 
-2. For each image, kit type is taken from the declared kit_types form field or inferred by kit_classifier.py (local heuristic or Bedrock). 
+2. For each image, kit type is taken from the declared kit_types form field or inferred by `kit_classifier.py` (local heuristic or Bedrock). 
 
-3. Each image is routed to its processor: generic 16-in-1 strip (engine.py), heavy metals strip (heavy_metals_processor.py), or TDS meter (tds_processor.py). In AWS mode these call Bedrock Claude Haiku via aws_provider.py; in local mode they use OpenCV heuristics. 
+3. Each image is routed to its processor: generic 16-in-1 strip (`engine.py`), heavy metals strip (`heavy_metals_processor.py`), or TDS meter (`tds_processor.py`). In AWS mode these call Bedrock Claude Haiku via `aws_provider.py`; in local mode they use OpenCV heuristics. 
 
-4. Per-image ImageResults are aggregated into a single SubmissionResult, including deduplicated combined_boiling_resistant_risk_flags (highest severity per parameter). 
+4. Per-image ImageResults are aggregated into a single SubmissionResult, including deduplicated `combined_boiling_resistant_risk_flags` (highest severity per parameter). 
 
-5. In AWS mode the result is persisted to DynamoDB via backend/src/db.py (save_submission) and is retrievable through GET /cv/results/{submission_id}. 
+5. For the local MVP, the endpoint mocks persistence and directly returns the `SubmissionResult` to the frontend without requiring DynamoDB. 
 
 6. The CV module deliberately stops at readings, confidence scores, and boiling-resistant risk flags; it never declares water safe or unsafe. Final guidance is handed off to the downstream Water Quality and Treatment agents.
 
@@ -139,7 +139,7 @@ Part 9: Prompt Engineering and Hub-and-Spoke Orchestration
 
 [ ] Define the structured JSON schemas passed exclusively between the specialized agents and the central Master Agent (avoiding global broadcasts).
 
-[ ] Program prompt templates for each agent in `src/agents/` that define their roles, enforce the localized Plan-Execute-Reflect reasoning, and prevent defensive filler text.
+[ ] Program prompt templates for each agent in `src/backend/agents/` that define their roles, enforce the localized Plan-Execute-Reflect reasoning, and prevent defensive filler text.
 
 [ ] Implement the asynchronous communication flow routing all specialist payloads strictly through the central Master Agent.
 
@@ -153,7 +153,7 @@ Part 10: Streaming UI Sidebar & Human-in-the-Loop Integration
 
 [ ] Use streaming responses to stream the Education Agent's explanations and responses.
 
-[ ] Implement operator review controls: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the AWS tables.
+[ ] Implement operator review controls: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the database tables (local PostgreSQL for MVP, Amazon RDS for production).
 
 [ ] Implement CV tool divergence/failure handling: If the computer vision module fails to detect colors due to poor lighting, catch the exception and fall back to manual parameter inputs with an alert banner.
 
@@ -169,9 +169,7 @@ Part 11: Final Production Deployment
 
 [ ] Deploy Amazon API Gateway to act as the secure front door routing requests from the Next.js frontend to the backend API.
 
-[ ] Migrate from the local PostgreSQL Docker container to a production Amazon RDS PostgreSQL instance.
-
-[ ] Provision and connect Amazon OpenSearch for production semantic search and vector embeddings.
+[ ] Migrate from the local PostgreSQL Docker container to a production Amazon RDS PostgreSQL instance, retaining the use of `pgvector` for semantic search and vector embeddings.
 
 [ ] Update Next.js frontend `.env` to point to the production API Gateway URL and deploy the frontend application.
 

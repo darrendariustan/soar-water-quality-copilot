@@ -1,0 +1,56 @@
+{
+  "who_gdwq": {
+    "title": "Guidelines for Drinking-water Quality, 4th edition incorporating the first and second addenda",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/teams/environment-climate-change-and-health/water-sanitation-and-health/water-safety-and-quality/drinking-water-quality-guidelines",
+    "year": 2022
+  },
+  "who_chlorine_t8_17": {
+    "title": "WHO GDWQ Table 8.17: Guideline values for chemicals used in water treatment",
+    "organisation": "World Health Organization",
+    "url": "https://www.ncbi.nlm.nih.gov/books/NBK579467/table/ch8.tab17/",
+    "year": 2022
+  },
+  "who_turbidity_t7_8": {
+    "title": "WHO GDWQ Table 7.8: Household water treatment performance and turbidity guidance",
+    "organisation": "World Health Organization",
+    "url": "https://www.ncbi.nlm.nih.gov/books/NBK579466/table/ch7.tab8/",
+    "year": 2022
+  },
+  "who_nitrate_nitrite": {
+    "title": "WHO Chemical fact sheets: Nitrate and nitrite",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/publications/m/item/chemical-fact-sheets--nitrate-nitrite",
+    "year": 2022
+  },
+  "epa_npdwr": {
+    "title": "National Primary Drinking Water Regulations",
+    "organisation": "US Environmental Protection Agency",
+    "url": "https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations",
+    "year": 2024
+  },
+  "epa_secondary": {
+    "title": "Secondary Drinking Water Standards: Guidance for Nuisance Chemicals",
+    "organisation": "US Environmental Protection Agency",
+    "url": "https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals",
+    "year": 2024
+  },
+  "cdc_nitrate": {
+    "title": "Nitrate/Nitrite Toxicity: US Standards and Regulations",
+    "organisation": "CDC / ATSDR",
+    "url": "https://archive.cdc.gov/www_atsdr_cdc_gov/csem/nitrate-nitrite/standards.html",
+    "year": 2012
+  },
+  "usgs_hardness": {
+    "title": "Hardness of Water",
+    "organisation": "US Geological Survey",
+    "url": "https://www.usgs.gov/special-topics/water-science-school/science/hardness-water",
+    "year": 2018
+  },
+  "cdc_emergency": {
+    "title": "Making Water Safe in an Emergency",
+    "organisation": "CDC",
+    "url": "https://www.cdc.gov/healthywater/emergency/making-water-safe.html",
+    "year": 2024
+  }
+}
