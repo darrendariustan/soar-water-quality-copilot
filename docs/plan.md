@@ -38,9 +38,9 @@ Part 2: Docker Infrastructure and Environment Setup
 
 Part 3: Static Asset Integration and Caching
 
-[ ] Configure AWS SDK (Boto3) to connect to Amazon Rekognition for computer vision inference.
+[x] Configure AWS SDK (Boto3) to connect to Amazon Rekognition for computer vision inference.
 
-[ ] Implement API wrapper logic for submitting water sample images and receiving parameter classifications from Rekognition.
+[x] Implement API wrapper logic for submitting water sample images and receiving parameter classifications from Rekognition.
 
 - Judging Criteria Alignment: Maps to Actions & Tool Use by binding backend classification and computer vision tools as cloud execution helpers.
 - Success Criteria: App boots instantly and successfully communicates with Amazon Rekognition API.
@@ -48,14 +48,14 @@ Part 3: Static Asset Integration and Caching
 
 Part 4: WaterForAll Dashboard Layout
 
-[ ] Implement a decoupled Next.js + React frontend with Tailwind CSS (in `src/frontend/`) mapped to a sleek dark utility UI theme with Water Blue Primary (`#209dd7`).
+[x] Implement a decoupled Next.js + React frontend with Tailwind CSS (in `src/frontend/`) mapped to a sleek dark utility UI theme with Water Blue Primary (`#209dd7`).
 
-[ ] Define the layout with three main sections:
+[x] Define the layout with three main sections:
     1. Water Image & Test Strip Upload Section: Interface to upload water appearance photos and test strip results.
     2. Safety Diagnosis & Advice Panel: Displays classification readings, confidence, safety risk level (Safe, Caution, Unsafe), and treatment recommendations.
     3. Community Risk Dashboard: Visualizes repeated unsafe readings, common parameter failures, trends over time, and location hotspots.
 
-[ ] Add a sidebar for the multi-agent conversational chat interface.
+[x] Add a sidebar for the multi-agent conversational chat interface.
 
 - Judging Criteria Alignment: Maps to Demo & Presentation by structuring a high-fidelity, scannable corporate utility dashboard.
 - Success Criteria: Clean, responsive rendering of image upload controls, parameters, and interactive charts on canvas loading.
