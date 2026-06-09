@@ -67,6 +67,12 @@ def master_agent(state: GraphState) -> dict:
         if s not in sources:
             sources.append(s)
 
+    exa = state.get("exa")
+    exa_contexts = []
+    if exa and exa.used_live:
+        for s in exa.sources:
+            exa_contexts.append({"title": s.title, "url": s.url, "summary": s.summary})
+
     result = WaterTestResult(
         id=str(uuid.uuid4()),
         timestamp=datetime.now(timezone.utc).isoformat(),
@@ -80,6 +86,7 @@ def master_agent(state: GraphState) -> dict:
         recommendations=recommendations,
         warnings=warnings,
         sources=sources,
+        exaContexts=exa_contexts,
     )
     return {"result": result}
 

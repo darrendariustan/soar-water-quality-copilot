@@ -11,11 +11,13 @@ dependencies = [
     "langchain-openai",
     "langchain-postgres>=0.0.17",
     "langgraph",
+    "opencv-python-headless>=4.13.0.92",
     "pgvector",
     "psycopg2-binary",
     "pydantic",
     "pydantic-settings",
     "python-dotenv",
+    "python-multipart>=0.0.32",
     "sqlalchemy",
     "uvicorn",
 ]

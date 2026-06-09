@@ -17,6 +17,7 @@ interface SampleInputProps {
   running: boolean;
   onScenario: (s: ScenarioId) => void;
   onUpload: (waterImage: File, testStripImage?: File) => void;
+  onManualSubmit?: (params: Record<string, number>) => void;
 }
 
 const scenarios: {
@@ -95,9 +96,10 @@ function DropZone({
             <button
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 onClear();
               }}
-              className="absolute right-2 top-2 rounded-full bg-paper/90 p-1 text-ink-soft hover:text-ink"
+              className="absolute right-2 top-2 z-10 rounded-full bg-paper/90 p-1 text-ink-soft hover:text-ink"
               aria-label="Remove image"
             >
               <X className="h-4 w-4" />
@@ -112,7 +114,7 @@ function DropZone({
         <input
           type="file"
           accept="image/*"
-          className="absolute inset-0 cursor-pointer opacity-0"
+          className={`absolute inset-0 cursor-pointer opacity-0 ${preview ? 'hidden' : ''}`}
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) onFile(f);
@@ -128,11 +130,20 @@ export function SampleInput({
   running,
   onScenario,
   onUpload,
+  onManualSubmit,
 }: SampleInputProps) {
   const [waterImage, setWaterImage] = useState<File | null>(null);
   const [stripImage, setStripImage] = useState<File | null>(null);
   const [waterPreview, setWaterPreview] = useState<string | null>(null);
   const [stripPreview, setStripPreview] = useState<string | null>(null);
+
+  const [isManualMode, setIsManualMode] = useState(false);
+  const [manualParams, setManualParams] = useState({
+    turbidity_ntu: 0,
+    chlorine_residual_ppm: 0,
+    ph: 7.0,
+    nitrate_ppm: 0,
+  });
 
   const read = useCallback(
     (file: File, setter: (p: string | null) => void) => {
@@ -191,44 +202,87 @@ export function SampleInput({
         <span className="text-xs uppercase tracking-wider text-ink-soft">
           or upload
         </span>
+        <button
+          onClick={() => setIsManualMode(!isManualMode)}
+          className="rounded-full bg-paper-soft px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-line/50"
+        >
+          {isManualMode ? "Switch to Photos" : "Manual Entry"}
+        </button>
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      {/* Upload zones */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <DropZone
-          label="Water photo"
-          preview={waterPreview}
-          onFile={(f) => {
-            setWaterImage(f);
-            read(f, setWaterPreview);
-          }}
-          onClear={() => {
-            setWaterImage(null);
-            setWaterPreview(null);
-          }}
-        />
-        <DropZone
-          label="Test strip photo (optional)"
-          preview={stripPreview}
-          onFile={(f) => {
-            setStripImage(f);
-            read(f, setStripPreview);
-          }}
-          onClear={() => {
-            setStripImage(null);
-            setStripPreview(null);
-          }}
-        />
-      </div>
+      {/* Upload zones or Manual Entry */}
+      {isManualMode ? (
+        <div className="space-y-5 rounded-2xl border border-line p-5">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-ink">Turbidity (NTU)</span>
+              <span className="font-mono text-ink-soft">{manualParams.turbidity_ntu.toFixed(1)}</span>
+            </div>
+            <input type="range" min="0" max="20" step="0.5" value={manualParams.turbidity_ntu} onChange={(e) => setManualParams({...manualParams, turbidity_ntu: parseFloat(e.target.value)})} className="w-full accent-water-400" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-ink">Chlorine (ppm)</span>
+              <span className="font-mono text-ink-soft">{manualParams.chlorine_residual_ppm.toFixed(1)}</span>
+            </div>
+            <input type="range" min="0" max="5" step="0.1" value={manualParams.chlorine_residual_ppm} onChange={(e) => setManualParams({...manualParams, chlorine_residual_ppm: parseFloat(e.target.value)})} className="w-full accent-water-400" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-ink">pH</span>
+              <span className="font-mono text-ink-soft">{manualParams.ph.toFixed(1)}</span>
+            </div>
+            <input type="range" min="0" max="14" step="0.1" value={manualParams.ph} onChange={(e) => setManualParams({...manualParams, ph: parseFloat(e.target.value)})} className="w-full accent-water-400" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-ink">Nitrate (ppm)</span>
+              <span className="font-mono text-ink-soft">{manualParams.nitrate_ppm.toFixed(0)}</span>
+            </div>
+            <input type="range" min="0" max="50" step="1" value={manualParams.nitrate_ppm} onChange={(e) => setManualParams({...manualParams, nitrate_ppm: parseFloat(e.target.value)})} className="w-full accent-water-400" />
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <DropZone
+            label="Water photo"
+            preview={waterPreview}
+            onFile={(f) => {
+              setWaterImage(f);
+              read(f, setWaterPreview);
+            }}
+            onClear={() => {
+              setWaterImage(null);
+              setWaterPreview(null);
+            }}
+          />
+          <DropZone
+            label="Test strip photo (optional)"
+            preview={stripPreview}
+            onFile={(f) => {
+              setStripImage(f);
+              read(f, setStripPreview);
+            }}
+            onClear={() => {
+              setStripImage(null);
+              setStripPreview(null);
+            }}
+          />
+        </div>
+      )}
 
       <motion.button
-        whileHover={{ scale: waterImage && !running ? 1.01 : 1 }}
-        whileTap={{ scale: waterImage && !running ? 0.99 : 1 }}
-        onClick={() =>
-          waterImage && onUpload(waterImage, stripImage || undefined)
-        }
-        disabled={!waterImage || running}
+        whileHover={{ scale: (isManualMode || waterImage) && !running ? 1.01 : 1 }}
+        whileTap={{ scale: (isManualMode || waterImage) && !running ? 0.99 : 1 }}
+        onClick={() => {
+          if (isManualMode && onManualSubmit) {
+            onManualSubmit(manualParams);
+          } else if (waterImage) {
+            onUpload(waterImage, stripImage || undefined);
+          }
+        }}
+        disabled={(!isManualMode && !waterImage) || running}
         className="mt-5 w-full rounded-full bg-water-400 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-water-400/20 transition-colors hover:bg-water-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
       >
         {running ? (

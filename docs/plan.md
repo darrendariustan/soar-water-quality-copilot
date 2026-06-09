@@ -89,9 +89,12 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
 Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
-[ ] Add manual scenario controls (e.g., sliders or presets) to the Next.js React frontend to load pre-configured "Water Quality Scenarios" (e.g., Safe Water, Microbiological/Turbidity Concern, Chemical/Heavy-Metal Contamination) from canned sample results, so the demo can contrast normal readings against anomalies without needing a live photo each time.
+[ ] Add manual scenario controls (e.g., draggable sliders for Turbidity, Chlorine, pH, Nitrate) to the Next.js React frontend so the demo can manually inject parameter anomalies without needing a live photo.
 
-[ ] Implement the CV submission orchestration flow, centred on `process_submission()` in `src/backend/cv/submission_handler.py`:
+[ ] Implement the CV submission orchestration flow:
+    - Added `POST /api/analyze` to handle multipart physical image uploads which processes bytes via `process_submission` and maps the results into the `master_agent` pipeline.
+    - Added `POST /cv/submissions` to handle manual JSON parameter inputs and maps them into the `master_agent` pipeline.
+    - Implemented `process_submission()` in `src/backend/cv/submission_handler.py`.
 
 1. User uploads 1-3 images in the UI (or uses manual scenario controls) -> POST `/cv/submissions` (`src/backend/main.py`). 
 
@@ -115,11 +118,11 @@ Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
 Part 7: Exa API Integration via Web Crawl Agent
 
-[ ] Integrate `exa_crawl_tool.py` with the external Exa API, routing requests securely using the `EXA_API_KEY`.
+[x] **Part 7: Exa API Integration via Web Crawl Agent** *(Status: COMPLETE)*
 
-[ ] Construct targeted search queries matching coordinates/country, contaminant parameters, and trusted domains (e.g., who.int, cdc.gov).
-
-[ ] Render the structured context headlines and summaries within the retrieval context dashboard component.
+[x] Integrate `exa_crawl_tool.py` with the external Exa API, routing requests securely using the `EXA_API_KEY`.
+[x] Construct targeted search queries matching coordinates/country, contaminant parameters, and trusted domains (e.g., who.int, cdc.gov).
+[x] Render the structured context headlines and summaries within the retrieval context dashboard component.
 
 - Judging Criteria Alignment: Maps to Actions & Tool Use and Autonomy & Decision-Making by empowering the RAG tool to fetch real-world context for anomalous parameter coordinates.
 - Success Criteria: Web query results return clean, structured real-time context relevant to the parameter and region.

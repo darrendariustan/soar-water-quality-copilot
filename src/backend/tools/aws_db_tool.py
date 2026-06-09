@@ -14,10 +14,15 @@ def _engine():
     url = os.getenv("DATABASE_URL")
     if not url:
         return None
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg://")
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://")
+    url = url.replace("@db:", "@localhost:")
     try:
         from sqlalchemy import create_engine
 
-        return create_engine(url, pool_pre_ping=True)
+        return create_engine(url, pool_pre_ping=True, connect_args={'connect_timeout': 3})
     except Exception:  # noqa: BLE001
         return None
 

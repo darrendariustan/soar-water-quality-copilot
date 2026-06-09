@@ -99,3 +99,4 @@ class WaterTestResult(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
+    exaContexts: list[dict] = Field(default_factory=list)

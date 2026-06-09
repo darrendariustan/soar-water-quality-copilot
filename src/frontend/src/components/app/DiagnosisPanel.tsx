@@ -126,6 +126,33 @@ export function DiagnosisPanel({ result, running }: DiagnosisPanelProps) {
         </div>
       )}
 
+      {/* Live Web Context (Exa) */}
+      {result.exaContexts && result.exaContexts.length > 0 && (
+        <div className="space-y-3 rounded-2xl border border-line bg-paper-soft p-4">
+          <div className="flex items-center gap-2 border-b border-line pb-2">
+            <BookOpen className="h-4 w-4 text-water-600" />
+            <h3 className="text-sm font-semibold text-ink">Live Web Context</h3>
+          </div>
+          {result.exaContexts.map((ctx, i) => (
+            <div key={i} className="space-y-1">
+              <a
+                href={ctx.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm font-medium text-water-600 hover:underline"
+              >
+                {ctx.title}
+              </a>
+              {ctx.summary && (
+                <p className="text-xs leading-relaxed text-ink-soft">
+                  {ctx.summary}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Sources */}
       {result.sources.length > 0 && (
         <div className="flex items-start gap-2 border-t border-line pt-4 text-xs text-ink-soft">

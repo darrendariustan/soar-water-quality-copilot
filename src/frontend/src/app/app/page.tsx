@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, Droplets } from "lucide-react";
 import type { WaterTestResult, ScenarioId } from "@/types";
-import { analyzeWaterTest, runScenario } from "@/lib/api";
+import { analyzeWaterTest, runScenario, analyzeManualTest } from "@/lib/api";
 import { agentPipeline } from "@/lib/mock-data";
 import { LocationSelector } from "@/components/app/LocationSelector";
 import { SampleInput } from "@/components/app/SampleInput";
@@ -56,6 +56,11 @@ export default function AppPage() {
     );
   };
 
+  const handleManualSubmit = (params: Record<string, number>) => {
+    setActiveScenario(null);
+    runPipeline(() => analyzeManualTest(params, areaId ?? undefined));
+  };
+
   return (
     <div className="relative z-10 min-h-screen">
       {/* Header */}
@@ -103,6 +108,7 @@ export default function AppPage() {
               running={running}
               onScenario={handleScenario}
               onUpload={handleUpload}
+              onManualSubmit={handleManualSubmit}
             />
           </div>
           <AgentOrchestration activeIndex={activeIndex} running={running} />

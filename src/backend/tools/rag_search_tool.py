@@ -35,6 +35,12 @@ def retrieve_guidance(contamination_type: str) -> dict:
         db_url = db_url.replace("postgresql://", "postgresql+psycopg://")
     
     db_url = db_url.replace("@db:", "@localhost:")
+    
+    # Append short connect_timeout to prevent hanging if DB is unresponsive
+    if "?" in db_url:
+        db_url += "&connect_timeout=3"
+    else:
+        db_url += "?connect_timeout=3"
 
     try:
         embeddings = OpenAIEmbeddings()

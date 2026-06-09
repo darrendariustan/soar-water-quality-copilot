@@ -24,6 +24,7 @@ export interface WaterTestResult {
   recommendations: string[];
   warnings: string[];
   sources: string[];
+  exaContexts?: { title: string; url: string; summary: string }[];
 }
 
 export interface ChatMessage {
