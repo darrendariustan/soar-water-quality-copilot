@@ -55,11 +55,11 @@ The AWS database acts as the system’s source of truth for safe-drinking-water 
 
 ### AWS Architecture for the MVP
 - **Amazon S3**: Stores raw crawled documents, images, test kit photos, and source snapshots.
-- **Amazon RDS PostgreSQL**: Stores structured knowledge, rules, source metadata, user test results, locations, risk levels, and audit logs.
+- **Amazon RDS PostgreSQL**: Stores structured knowledge, rules, source metadata, user test results, locations, risk levels, and audit logs. (MVP will use a robust local PostgreSQL Docker container).
 - **Amazon OpenSearch Service**: Stores vector embeddings for semantic search and RAG retrieval.
 - **AWS Lambda or ECS**: Runs ingestion jobs, Exa crawl jobs, data cleaning, and agent backend logic.
-- **Amazon API Gateway**: Exposes backend APIs to the frontend app.
-- **Amazon Bedrock or external LLM API**: Generates user-friendly explanations using retrieved knowledge.
+- **Amazon Rekognition**: Used for Computer Vision to read water test kits and assess water clarity.
+- **Amazon Bedrock or external LLM API**: Generates user-friendly explanations using retrieved knowledge, orchestrated via LangGraph.
 
 ### Database Tables
 
@@ -108,7 +108,7 @@ Every recommendation can be traced back to stored knowledge, source metadata, an
 
 ## Updated Agent Architecture
 
-The system is designed as a master water safety agent supported by specialized sub-agents.
+The system is designed as a master water safety agent supported by specialized sub-agents, orchestrated using **LangGraph**.
 
 ```mermaid
 graph TD
@@ -159,12 +159,12 @@ graph TD
 
 ## Technical Details
 
-- Packaged completely within a Docker container to ensure cross-platform binary compatibility for deep learning and hydraulic simulation dependencies
-- Use uv as the ultra-fast package manager for Python inside the Docker container to handle heavy wheels like torch and wntr efficiently
-- Use structured outputs in JSON format especially across multiple agents and APIs
-- Integrate the Exa API securely using environment variables to fetch external real-time context
-- Use popular visualization libraries
-- As simple as possible but with an elegant corporate-utility UI
+- Containerized architecture using Docker Compose, including a robust local PostgreSQL container to emulate Amazon RDS.
+- Use uv as the ultra-fast package manager for the Python FastAPI backend, managing LangGraph and other dependencies.
+- Use structured outputs in JSON format especially across multiple agents and APIs.
+- Integrate the Exa API securely using environment variables to fetch external real-time context.
+- Leverage Amazon Rekognition via API for all Computer Vision tasks.
+- Frontend built with **Next.js, React, and Tailwind CSS** for a highly polished, elegant corporate-utility UI.
 
 ## Color Scheme
 
@@ -188,23 +188,23 @@ graph TD
 
 ## Technical Architecture
 
-### Frontend Web / Mobile App
-- Upload water image
-- Upload test kit image
-- Show results and advice
-- Show community risk dashboard
+### Frontend Web Application
+- Built with Next.js, React, and Tailwind CSS.
+- Upload water image and test kit image.
+- Show results, conversational UI, and advice.
+- Show community risk dashboard.
 
 ### Backend API
-- Receives image and user input
-- Calls computer vision model
-- Calls master agent
-- Stores results in AWS
+- Built with FastAPI.
+- Receives image and user input.
+- Orchestrates agents via LangGraph.
+- Calls Amazon Rekognition for computer vision.
+- Stores results in the local PostgreSQL container (simulating AWS RDS).
 
 ### Computer Vision Layer
-- Test strip color detection
-- Reference chart comparison
-- Water clarity detection
-- Image quality confidence score
+- Powered by **Amazon Rekognition**.
+- Test strip color detection and reference chart comparison.
+- Water clarity detection and image quality confidence score.
 
 ### Agentic AI Layer
 - Master Water Safety Agent

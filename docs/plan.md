@@ -23,26 +23,27 @@ Part 1: Plan and Scaffolding Verification
 
 Part 2: Docker Infrastructure and Environment Setup
 
-[ ] Write a root-level `Dockerfile` utilizing multi-stage builds and `uv` to install dependencies including computer vision and machine learning packages.
-[ ] Configure `.env` mapping for environmental secrets management (`OPENAI_API_KEY`, `EXA_API_KEY`).
+[ ] Write a `docker-compose.yml` and root-level `Dockerfile` utilizing multi-stage builds and `uv` to install FastAPI/LangGraph dependencies.
+[ ] Configure a local robust PostgreSQL container within `docker-compose.yml` to simulate Amazon RDS.
+[ ] Configure `.env` mapping for environmental secrets management (`OPENAI_API_KEY`, `EXA_API_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`).
 [ ] Write localized execution scripts (`start-server.sh`, `start-server.bat`, `stop-server.sh`, and `stop-server.bat`) inside `scripts/`.
 
 - Judging Criteria Alignment: Maps to Actions & Tool Use and Failure Handling by setting up the closed, cross-platform container sandbox environment that isolates OS-specific engineering dependencies.
-- Success Criteria: Docker image compiles cleanly using `uv` package manager; container runs a baseline application page accessible at localhost.
-- Tests: Execute container ping test; verify `uv` lockfile generation integrity.
+- Success Criteria: Docker images compile cleanly; container runs a baseline Next.js application page and FastAPI backend accessible at localhost, with PostgreSQL running.
+- Tests: Execute container ping tests for frontend, backend, and database; verify `uv` lockfile generation integrity.
 
 Part 3: Static Asset Integration and Caching
 
-[ ] Place baseline reference color charts for test strips inside `data/raw/` and placeholder classification models inside `models/`.
-[ ] Implement image loading and processing pipelines using appropriate caching wrappers (`st.cache_resource` or equivalent) to load reference charts and classification model weights exactly once.
+[ ] Configure AWS SDK (Boto3) to connect to Amazon Rekognition for computer vision inference.
+[ ] Implement API wrapper logic for submitting water sample images and receiving parameter classifications from Rekognition.
 
-- Judging Criteria Alignment: Maps to Actions & Tool Use by binding backend classification and computer vision tools as local execution helpers.
-- Success Criteria: App boots instantly without repeating heavy disk read routines on user window reruns.
-- Tests: Assert model checkpoints/reference charts load successfully; verify the image processing parser loads without errors.
+- Judging Criteria Alignment: Maps to Actions & Tool Use by binding backend classification and computer vision tools as cloud execution helpers.
+- Success Criteria: App boots instantly and successfully communicates with Amazon Rekognition API.
+- Tests: Assert AWS credentials load successfully; verify the image processing parser receives valid JSON from Rekognition.
 
 Part 4: WaterForAll Dashboard Layout
 
-[ ] Implement a single-page view (e.g., Streamlit in `src/app.py` or equivalent framework) mapped to a sleek dark utility UI theme with Water Blue Primary (`#209dd7`).
+[ ] Implement a decoupled Next.js + React frontend with Tailwind CSS (in `src/frontend/`) mapped to a sleek dark utility UI theme with Water Blue Primary (`#209dd7`).
 [ ] Define the layout with three main sections:
     1. Water Image & Test Strip Upload Section: Interface to upload water appearance photos and test strip results.
     2. Safety Diagnosis & Advice Panel: Displays classification readings, confidence, safety risk level (Safe, Caution, Unsafe), and treatment recommendations.
@@ -56,13 +57,13 @@ Part 4: WaterForAll Dashboard Layout
 Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
 [ ] Implement isolated tools inside `src/tools/`:
-    - `cv_tool.py`: Handles local computer vision analysis of test strip colors and water clarity.
-    - `aws_db_tool.py`: Implements RDS PostgreSQL and S3 mock integrations for structured tables (Knowledge, Rule, User Test Result, Community Risk) and raw files.
-    - `rag_search_tool.py`: Performs vector search or semantic matching against knowledge tables using OpenSearch indices.
+    - `cv_tool.py`: Wraps Amazon Rekognition API calls for analysis of test strip colors and water clarity.
+    - `aws_db_tool.py`: Integrates with the local Docker PostgreSQL container to mock Amazon RDS structured tables (Knowledge, Rule, User Test Result, Community Risk).
+    - `rag_search_tool.py`: Performs vector search or semantic matching against knowledge tables.
     - `exa_crawl_tool.py`: Performs targeted search/crawls against the Exa API for trusted sources.
-[ ] Implement specialized, autonomous agents inside `src/agents/` driven by a localized Plan-Execute-Reflect loop:
-    - `master_agent.py`: Coordinates the agents, aggregates parameters, and compiles final recommendations.
-    - `cv_agent.py`: Reads the water test kit and clarity, evaluates image quality and confidence.
+[ ] Implement specialized, autonomous agents inside `src/agents/` driven by **LangGraph** for orchestration:
+    - `master_agent.py`: The LangGraph supervisor that coordinates the agents, aggregates parameters, and compiles final recommendations.
+    - `cv_agent.py`: LangGraph node to read the water test kit and clarity via `cv_tool.py`.
     - `water_quality_agent.py`: Maps parameter readings (pH, chlorine, turbidity, nitrate, nitrite, hardness, iron) to risk categories.
     - `aws_retrieval_agent.py`: Queries AWS OpenSearch/RDS PostgreSQL tables for water safety rules and guides.
     - `exa_crawl_agent.py`: Invokes the Exa crawl tool to search trusted public sources (WHO, CDC, etc.) for missing/outdated rules.
@@ -71,8 +72,7 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
     - `education_agent.py`: Explains concepts in simple terms.
     - `safety_agent.py`: Inspects advice to prevent hazardous guidelines (e.g. advising boiling for chemical contaminants).
 [ ] Implement compute automation pipelines inside `src/pipelines/`:
-    - `ingest_knowledge.py`: Ingests and embeds crawling results into OpenSearch/PostgreSQL.
-    - `evaluate_cv_model.py`: Validates CV model classifications on test strip datasets.
+    - `ingest_knowledge.py`: Ingests and embeds crawling results into PostgreSQL.
 
 - Judging Criteria Alignment: Maps to Agent Overview, Autonomy & Decision-Making, Actions & Tool Use, and Compute Automation Boundaries by building decoupled agents, isolated tools, and execution pipelines.
 - Success Criteria: Specialist agents successfully interact with tools and pipelines, communicating with the Master Agent using structured JSON control payloads.
