@@ -68,6 +68,51 @@ soar-water-quality-agent/
 
 ---
 
+## Technical Architecture
+
+The WaterForAll system is built upon a six-tier architecture that integrates edge telemetry, multi-agent coordination, and cloud storage:
+
+### Frontend Web / Mobile App
+- Upload water image
+- Upload test kit image
+- Show results and advice
+- Show community risk dashboard
+
+### Backend API
+- Receives image and user input
+- Calls computer vision model
+- Calls master agent
+- Stores results in AWS
+
+### Computer Vision Layer
+- Test strip colour detection
+- Reference chart comparison
+- Water clarity detection
+- Image quality confidence score
+
+### Agentic AI Layer
+- Master Water Safety Agent
+- Water Quality Agent
+- Treatment Guidance Agent
+- AWS Knowledge Retrieval Agent
+- Exa Web Crawl Agent
+- Community Reporting Agent
+
+### Knowledge Layer
+- Exa crawls trusted web sources
+- Raw content stored in Amazon S3
+- Structured knowledge stored in Amazon RDS PostgreSQL
+- Embeddings stored in Amazon OpenSearch
+- Safety rules stored in database tables
+
+### Analytics Layer
+- Community-level unsafe water trends
+- Repeated parameter failures
+- Location-based risk hotspots
+- Reports for NGOs or local agencies
+
+---
+
 ## Exa and AWS Knowledge Layer
 
 A key part of WaterForAll is the safe drinking water knowledge base.
