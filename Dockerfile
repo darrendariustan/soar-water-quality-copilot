@@ -9,9 +9,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy requirements and install dependencies using uv
-COPY requirements.txt .
-RUN uv pip install --system -r requirements.txt
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies using uv sync
+RUN uv sync --frozen --no-dev --no-install-project
+
+# Ensure virtual environment executables are used
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy source code
 COPY src/backend ./src/backend

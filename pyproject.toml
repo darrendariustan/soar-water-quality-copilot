@@ -1,0 +1,18 @@
+[project]
+name = "waterforall-backend"
+version = "0.1.0"
+description = "WaterForAll Backend API"
+requires-python = ">=3.12"
+dependencies = [
+    "boto3",
+    "fastapi",
+    "langchain",
+    "langgraph",
+    "pgvector",
+    "psycopg2-binary",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv",
+    "sqlalchemy",
+    "uvicorn",
+]
