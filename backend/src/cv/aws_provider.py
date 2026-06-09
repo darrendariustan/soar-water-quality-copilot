@@ -27,7 +27,7 @@ from .models import (
 _BEDROCK_MODEL = os.getenv(
     "BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 )
-_BEDROCK_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+_BEDROCK_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")  # cross-region inference profile requires us-east-1
 
 _STRIP_SYSTEM_PROMPT = """You are a water quality test strip analyser. You will be given:
 1. An image of a water test strip

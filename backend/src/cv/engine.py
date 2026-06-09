@@ -21,7 +21,11 @@ _WARNINGS = [
     "Final safety guidance must be handled by the Water Quality Agent and Treatment Guidance Agent.",
 ]
 
-_BOILING_RESISTANT_PARAMS = {"nitrate", "nitrite", "iron"}
+_BOILING_RESISTANT_PARAMS = {
+    "nitrate", "nitrite", "iron",
+    # Heavy metals — boiling does not remove any of these
+    "lead", "mercury", "copper", "cadmium", "chromium",
+}
 
 _PARAM_MESSAGES = {
     "nitrate": "Boiling does not remove nitrate. Do not treat boiling as sufficient.",
