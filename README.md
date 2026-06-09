@@ -225,3 +225,41 @@ Explains water safety concepts in simple language.
 
 ### 9. Safety and Compliance Agent
 Prevents the system from giving unsafe advice, such as saying chemically contaminated water is safe after boiling.
+
+---
+
+## Hackathon Judging Criteria Alignment
+
+### 1. Agent Overview
+- **Agents Built**: A cooperative multi-agent system led by the Master Water Safety Agent, supported by 8 specialized sub-agents: Computer Vision, Water Quality Interpretation, AWS Knowledge Retrieval, Exa Web Crawl, Treatment Guidance, Community Reporting, Education, and Safety & Compliance.
+- **Purpose**: Provides low-cost, AI-assisted water safety checks and practical treatment instructions for communities with limited access to laboratories, using photos of simple test strips.
+
+### 2. Autonomy & Decision-Making
+- **Reasoning Loop**: Specialized agents operate within a Plan-Execute-Reflect loop.
+- **Dynamic Routing**: The Master Agent dynamically plans execution paths based on data availability, invoking the Exa Web Crawl Agent only when cached AWS knowledge retrieval is insufficient for a particular contaminant or region.
+
+### 3. Actions & Tool Use
+- **Actions**: Vision-based test strip color parsing, RAG query vector matching, automated web crawling, structured database operations, and real-time streaming explanation generation.
+- **Tools**:
+  - `cv_engine.py`: Parses RGB values of test strips and evaluates water clarity.
+  - `opensearch_client.py`: Vector search on Amazon OpenSearch embeddings.
+  - `rds_client.py`: PostgreSQL queries and inserts for rules, results, and risk tables.
+  - `exa_search.py`: Trusted web source scraping using the Exa API.
+  - `s3_client.py`: Stores raw crawl files and user images.
+
+### 4. Orchestration
+- **Topology**: Hub-and-Spoke model.
+- **Communication**: All sub-agents route messages strictly through the central Master Agent using structured JSON control payloads to ensure predictable execution chains.
+
+### 5. Human-in-the-Loop
+- **Manual Overrides**: Operators can manually adjust detected test strip parameters via dashboard controls.
+- **Data Governance**: Community risk escalations and newly crawled guidelines are stored with a "pending review" status, requiring admin approval before becoming active rules.
+
+### 6. Failure Handling
+- **Offline Fallback**: If external API endpoints (LLM or Exa API) time out, the system catches the exception and downgrades to local mathematical and rule-based evaluation.
+- **Vision Exception Recovery**: If the photo is blurry or unreadable, the Computer Vision Agent triggers a UI exception, prompting the user to input parameters manually via UI sliders.
+
+### 7. Demo & Presentation
+- **User Interface**: Streamlit/Web dashboard with dark theme and Water Blue Primary (#209dd7).
+- **Interactive Scenarios**: Presenters can select preset scenarios (e.g., Safe Water, Microbiological Outbreak, Chemical Spill) to immediately demonstrate the end-to-end multi-agent orchestration, database logging, and streaming guidance.
+
