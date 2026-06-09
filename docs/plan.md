@@ -59,7 +59,7 @@ Part 4: WaterForAll Dashboard Layout
 
 - Judging Criteria Alignment: Maps to Demo & Presentation by structuring a high-fidelity, scannable corporate utility dashboard.
 - Success Criteria: Clean, responsive rendering of image upload controls, parameters, and interactive charts on canvas loading.
-- Tests: Verification of visual element DOM mounting via tests.
+- Tests: Verification of visual element DOM mounting via tests against the new `<AppPage />` layout and integrated components.
 
 Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
