@@ -65,18 +65,22 @@ The WaterForAll system is built upon a six-tier architecture that integrates edg
 - Stores results in AWS
 
 ### Computer Vision Layer
-- Test strip colour detection
+- Test strip color detection
 - Reference chart comparison
 - Water clarity detection
 - Image quality confidence score
 
 ### Agentic AI Layer
 - Master Water Safety Agent
-- Water Quality Agent
-- Treatment Guidance Agent
+- Computer Vision Agent
+- Water Quality Interpretation Agent
 - AWS Knowledge Retrieval Agent
 - Exa Web Crawl Agent
+- Treatment Guidance Agent
 - Community Reporting Agent
+- Education Agent
+- Safety and Compliance Agent
+
 
 ### Knowledge Layer
 - Exa crawls trusted web sources
@@ -103,79 +107,85 @@ The crawled content will not be used blindly. It will go through a knowledge ing
 
 ```mermaid
 graph TD
-    A[Trusted Public Sources] --> B[Exa Web Crawl / Search API]
-    B --> C[Content Extraction]
-    C --> D[Source Filtering and Deduplication]
-    D --> E[Safety Review and Metadata Tagging]
-    E --> F[AWS Database Storage]
-    F --> G[Embedding and Semantic Search]
-    G --> H[RAG Response by WaterForAll Agent]
+    A[Trusted Sources: WHO, CDC, UNICEF] -->|Exa Web Crawl| B[Exa API Search / Retrieve]
+    B -->|Content Extraction| C[Pipeline Ingestion]
+    C -->|Filtering & Deduplication| D[Clean Content]
+    D -->|Safety Review & Tagging| E{Human-in-the-Loop Approval}
+    
+    E -->|Approved: Raw Data| S3[(Amazon S3)]
+    E -->|Approved: Structured Rules| RDS[(Amazon RDS PostgreSQL)]
+    E -->|Approved: Text Embeddings| OS[(Amazon OpenSearch Service)]
+    
+    RDS -->|RAG Semantic Search| Agent[Master Water Safety Agent]
+    OS -->|RAG Semantic Search| Agent
 ```
 
 The AWS database will act as the system’s source of truth for safe-drinking-water knowledge and user records.
 
 For the MVP, the AWS architecture can be:
 
-### Amazon S3
-Stores raw crawled documents, images, test kit photos and source snapshots.
-
-### Amazon RDS PostgreSQL
-Stores structured knowledge, rules, source metadata, user test results, locations, risk levels and audit logs.
-
-### Amazon OpenSearch Service
-Stores vector embeddings for semantic search and RAG retrieval.
-
-### AWS Lambda or ECS
-Runs ingestion jobs, Exa crawl jobs, data cleaning and agent backend logic.
-
-### Amazon API Gateway
-Exposes backend APIs to the frontend app.
-
-### Amazon Bedrock or external LLM API
-Generates user-friendly explanations using retrieved knowledge.
+```mermaid
+graph TD
+    User[Frontend Web / Mobile App] -->|HTTPS Request| APIGW[Amazon API Gateway]
+    APIGW -->|Route Call| Compute[AWS Lambda / ECS Backend]
+    
+    Compute -->|Store Raw Snapshots & Images| S3[(Amazon S3)]
+    Compute -->|Query/Store Rules & Logs| RDS[(Amazon RDS PostgreSQL)]
+    Compute -->|Semantic Vector Search| OS[(Amazon OpenSearch Service)]
+    Compute -->|Generate Safety Explanations| Bedrock[Amazon Bedrock / LLM API]
+    
+    Exa[Exa Crawl API] -->|Web Crawled Data| Compute
+```
 
 ---
 
 ### Database Schema Design
 
-The database should store both structured and unstructured knowledge.
+The database stores both structured and unstructured knowledge.
 
-#### Knowledge table:
-- source title
-- source URL
-- organisation name
-- country or region
-- topic category
-- content summary
-- full extracted text
-- last crawled date
-- safety confidence score
-- approved / pending / rejected status
+```mermaid
+erDiagram
+    KNOWLEDGE {
+        varchar source_title
+        varchar source_url
+        varchar organisation_name
+        varchar country_or_region
+        varchar topic_category
+        text content_summary
+        text full_extracted_text
+        date last_crawled_date
+        float safety_confidence_score
+        varchar approval_status
+    }
+    WATER_SAFETY_RULE {
+        varchar condition
+        varchar risk_level
+        text recommended_action
+        text warning_message
+        varchar source_reference
+        varchar human_review_status
+    }
+    USER_TEST_RESULT {
+        varchar anonymised_user_id
+        varchar test_kit_type
+        jsonb parameter_readings
+        float image_confidence_score
+        varchar water_appearance_classification
+        text recommended_action
+        timestamp timestamp
+        point approximate_location
+    }
+    COMMUNITY_RISK {
+        varchar area
+        int repeated_unsafe_readings
+        jsonb common_parameter_failures
+        varchar trend_over_time
+        text escalation_recommendation
+    }
 
-#### Water safety rule table:
-- condition
-- risk level
-- recommended action
-- warning message
-- source reference
-- human review status
-
-#### User test result table:
-- anonymised user ID
-- test kit type
-- parameter readings
-- image confidence score
-- water appearance classification
-- recommended action
-- timestamp
-- approximate location, if user consents
-
-#### Community risk table:
-- area
-- repeated unsafe readings
-- common parameter failures
-- trend over time
-- escalation recommendation
+    KNOWLEDGE ||--o{ WATER_SAFETY_RULE : "source_reference"
+    USER_TEST_RESULT ||--o{ COMMUNITY_RISK : "area"
+```
 
 This allows the master agent to give advice that is not just based on the LLM’s general knowledge, but based on retrieved, cited, curated and stored public health knowledge.
 
@@ -187,14 +197,34 @@ The system will be designed as a master water safety agent supported by speciali
 
 ```mermaid
 graph TD
-    A[User takes photo of water and testing kit] --> B[Computer Vision Agent reads water image and test strip]
-    B --> C[Master Agent receives readings and user context]
-    C --> D[Water Quality Interpretation Agent checks parameter risks]
-    D --> E[AWS Knowledge Retrieval Agent searches stored knowledge]
-    E --> F[Exa Web Crawl Agent refreshes missing or outdated guidance]
-    F --> G[Treatment Guidance Agent recommends practical actions]
-    G --> H[Community Reporting Agent stores anonymised results]
-    H --> I[User receives clear, simple and safe advice]
+    subgraph UI [User Interaction]
+        User[User App Input] -->|Upload Photo / Parameters| Master[Master Water Safety Agent]
+        Master -->|Stream Safety Advice & Explanations| User
+    end
+
+    subgraph Hub [Central Coordinator]
+        Master
+    end
+
+    subgraph Spokes [Specialized Sub-Agents]
+        CV[Computer Vision Agent]
+        WQ[Water Quality Interpretation Agent]
+        AWS[AWS Knowledge Retrieval Agent]
+        Exa[Exa Web Crawl Agent]
+        Treat[Treatment Guidance Agent]
+        Report[Community Reporting Agent]
+        Edu[Education Agent]
+        Safety[Safety & Compliance Agent]
+    end
+
+    Master <-->|1. Parse Image / Clarity| CV
+    Master <-->|2. Interpret Parameter Risks| WQ
+    Master <-->|3. Search Stored Context| AWS
+    Master <-->|4. Trigger Web Search| Exa
+    Master <-->|5. Generate Action Steps| Treat
+    Master <-->|6. Log Telemetry Trends| Report
+    Master <-->|7. Explain Chemistry Simply| Edu
+    Master <-->|8. Enforce Safety Gate| Safety
 ```
 
 The full set of agents includes:
