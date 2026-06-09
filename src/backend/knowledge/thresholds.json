@@ -1,0 +1,86 @@
+{
+  "ph": {
+    "label": "pH",
+    "unit": "",
+    "safe_min": 6.5,
+    "safe_max": 8.5,
+    "caution_min": 5.5,
+    "caution_max": 9.5,
+    "scale_max": 14,
+    "max_risk": "unsafe",
+    "source_id": "who_gdwq",
+    "note": "WHO operational range and EPA secondary standard are 6.5-8.5. No health-based guideline value; extreme pH affects disinfection and is corrosive."
+  },
+  "chlorine_residual_ppm": {
+    "label": "Chlorine",
+    "unit": "mg/L",
+    "safe_min": 0.2,
+    "safe_max": 4.0,
+    "caution_min": 0.0,
+    "caution_max": 5.0,
+    "scale_max": 5,
+    "max_risk": "caution",
+    "source_id": "who_chlorine_t8_17",
+    "note": "WHO: minimum 0.2 mg/L free chlorine at point of delivery, at least 0.5 mg/L for effective disinfection, health-based guideline 5 mg/L. EPA MRDL 4 mg/L. Low residual can indicate inadequate disinfection."
+  },
+  "turbidity_ntu": {
+    "label": "Turbidity",
+    "unit": "NTU",
+    "safe_min": 0.0,
+    "safe_max": 1.0,
+    "caution_min": 0.0,
+    "caution_max": 5.0,
+    "scale_max": 20,
+    "max_risk": "unsafe",
+    "source_id": "who_turbidity_t7_8",
+    "note": "WHO: below 1 NTU is ideal for effective disinfection, below 5 NTU is acceptable. EPA primary standard is 1 NTU. High turbidity shields microorganisms and reduces disinfection effectiveness."
+  },
+  "nitrate_ppm": {
+    "label": "Nitrate",
+    "unit": "mg/L",
+    "safe_min": 0.0,
+    "safe_max": 50.0,
+    "caution_min": 0.0,
+    "caution_max": 50.0,
+    "scale_max": 100,
+    "max_risk": "unsafe",
+    "source_id": "who_nitrate_nitrite",
+    "note": "WHO guideline value 50 mg/L as nitrate ion. EPA MCL 10 mg/L as nitrogen (about 45 mg/L as nitrate). Acute risk of methaemoglobinaemia in bottle-fed infants."
+  },
+  "nitrite_ppm": {
+    "label": "Nitrite",
+    "unit": "mg/L",
+    "safe_min": 0.0,
+    "safe_max": 3.0,
+    "caution_min": 0.0,
+    "caution_max": 3.0,
+    "scale_max": 6,
+    "max_risk": "unsafe",
+    "source_id": "who_nitrate_nitrite",
+    "note": "WHO acute guideline value 3 mg/L as nitrite ion. EPA MCL 1 mg/L as nitrogen."
+  },
+  "hardness_ppm": {
+    "label": "Hardness",
+    "unit": "mg/L",
+    "safe_min": 0.0,
+    "safe_max": 200.0,
+    "caution_min": 0.0,
+    "caution_max": 1000000.0,
+    "scale_max": 400,
+    "max_risk": "caution",
+    "source_id": "usgs_hardness",
+    "note": "No health-based guideline. USGS classes above 180 mg/L as very hard; WHO notes scaling above 200 mg/L as calcium carbonate. Aesthetic and operational only, not a safety risk."
+  },
+  "iron_ppm": {
+    "label": "Iron",
+    "unit": "mg/L",
+    "safe_min": 0.0,
+    "safe_max": 0.3,
+    "caution_min": 0.0,
+    "caution_max": 1000000.0,
+    "scale_max": 1,
+    "max_risk": "caution",
+    "source_id": "epa_secondary",
+    "note": "No health-based guideline. EPA secondary standard 0.3 mg/L; WHO aesthetic threshold around 0.3 mg/L for staining and taste."
+  }
+}

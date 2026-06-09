@@ -1,0 +1,30 @@
+[
+  {
+    "id": "no_boil_chemical",
+    "name": "Do not boil chemically contaminated water",
+    "blocks_actions": ["boil", "boiling"],
+    "triggers_contamination": ["chemical", "fuel", "pesticide", "industrial", "heavy_metal"],
+    "risk_level": "unsafe",
+    "warning": "If chemical, fuel, pesticide, industrial or heavy metal contamination is suspected, do not boil the water. Boiling does not remove these and can concentrate some of them. Use a different water source and seek proper laboratory testing.",
+    "source_id": "cdc_emergency"
+  },
+  {
+    "id": "no_chlorine_only_chemical",
+    "name": "Chlorination does not remove chemical contamination",
+    "blocks_actions": ["chlorinate", "chlorination", "disinfect"],
+    "triggers_contamination": ["chemical", "fuel", "pesticide", "industrial", "heavy_metal"],
+    "risk_level": "unsafe",
+    "warning": "Household chlorination only addresses microbial contamination. It does not make chemically contaminated water safe. Use another source.",
+    "source_id": "cdc_emergency"
+  },
+  {
+    "id": "clarify_before_disinfection",
+    "name": "Reduce turbidity before disinfection",
+    "blocks_actions": [],
+    "requires_before": ["chlorinate", "chlorination"],
+    "triggers_parameter": {"turbidity_ntu": {"above": 5.0}},
+    "risk_level": "caution",
+    "warning": "Turbidity is above 5 NTU. Let particles settle and filter the water before chlorination, otherwise disinfection may be ineffective.",
+    "source_id": "who_turbidity_t7_8"
+  }
+]

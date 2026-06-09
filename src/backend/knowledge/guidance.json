@@ -1,0 +1,73 @@
+{
+  "safe": {
+    "contamination_type": "none",
+    "title": "Water within safe screening ranges",
+    "summary": "All screened parameters fall within recognised safe ranges for drinking water. This is a first-level screen and does not replace laboratory testing.",
+    "steps": [
+      "Store the water in a clean, covered container.",
+      "Use a clean cup or tap to draw water to avoid recontamination.",
+      "Re-test if the water source, colour, smell or taste changes."
+    ],
+    "source_ids": ["who_gdwq"]
+  },
+  "microbial": {
+    "contamination_type": "microbial",
+    "title": "Suspected microbial contamination",
+    "summary": "Cloudy water, low chlorine residual or high turbidity suggest possible microbial contamination. Boiling and disinfection are effective against microorganisms.",
+    "steps": [
+      "Let visible particles settle, then pour off the clearer water.",
+      "Filter the clearer water through a clean cloth or household filter.",
+      "Bring the water to a rolling boil for at least one minute (three minutes above 2000 m altitude).",
+      "If boiling is not possible, disinfect clear water with household chlorine following local dosing guidance.",
+      "Store the treated water in a clean, covered container."
+    ],
+    "source_ids": ["cdc_emergency", "who_turbidity_t7_8"]
+  },
+  "turbidity": {
+    "contamination_type": "turbidity",
+    "title": "High turbidity (cloudy water)",
+    "summary": "High turbidity reduces the effectiveness of disinfection and can hide microorganisms. Clarify the water before disinfecting.",
+    "steps": [
+      "Let the water stand so heavier particles settle to the bottom.",
+      "Pour or siphon off the clearer water from the top.",
+      "Filter through a clean cloth, sand filter or household filter.",
+      "Then boil or disinfect the clarified water before drinking."
+    ],
+    "source_ids": ["who_turbidity_t7_8", "cdc_emergency"]
+  },
+  "nitrate": {
+    "contamination_type": "chemical",
+    "title": "Elevated nitrate or nitrite",
+    "summary": "High nitrate or nitrite is a chemical risk, especially for bottle-fed infants and pregnant women. Boiling does not reduce nitrate and concentrates it.",
+    "steps": [
+      "Do not boil to try to remove nitrate or nitrite; boiling concentrates them.",
+      "Do not use this water to prepare infant formula.",
+      "Use an alternative low-nitrate source such as tested bottled or treated water.",
+      "Seek proper testing and, if needed, treatment such as reverse osmosis or ion exchange."
+    ],
+    "source_ids": ["who_nitrate_nitrite", "cdc_nitrate"]
+  },
+  "chemical": {
+    "contamination_type": "chemical",
+    "title": "Suspected chemical contamination",
+    "summary": "Suspected chemical, fuel, pesticide, industrial or heavy metal contamination cannot be made safe by boiling or household chlorination.",
+    "steps": [
+      "Do not drink the water and do not boil it.",
+      "Use a different, known-safe water source.",
+      "Avoid using the water for cooking or preparing infant formula.",
+      "Report the suspected contamination and seek laboratory testing."
+    ],
+    "source_ids": ["cdc_emergency", "who_gdwq"]
+  },
+  "aesthetic": {
+    "contamination_type": "aesthetic",
+    "title": "Aesthetic concern only",
+    "summary": "Hardness or iron above the aesthetic threshold affects taste, smell or staining but is not a direct health risk.",
+    "steps": [
+      "The water is acceptable for drinking on these parameters.",
+      "Hard water can cause scaling; iron can stain and affect taste.",
+      "A simple filter can improve taste and reduce staining if desired."
+    ],
+    "source_ids": ["usgs_hardness", "epa_secondary"]
+  }
+}
