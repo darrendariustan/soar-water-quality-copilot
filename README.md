@@ -59,6 +59,7 @@ The WaterForAll system is built upon a six-tier architecture that integrates edg
 - Show community risk dashboard
 
 ### Backend API
+- Exposed securely via Amazon API Gateway
 - Receives image and user input
 - Calls computer vision model
 - Calls master agent

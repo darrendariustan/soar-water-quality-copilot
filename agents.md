@@ -53,7 +53,8 @@ graph TD
 
 The AWS database acts as the system’s source of truth for safe-drinking-water knowledge and user records.
 
-### AWS Architecture for the MVP
+### AWS Architecture for the MVP and Final Deployment
+- **Amazon API Gateway**: Routes frontend requests to the backend services securely in the final deployment.
 - **Amazon S3**: Stores raw crawled documents, images, test kit photos, and source snapshots.
 - **Amazon RDS PostgreSQL**: Stores structured knowledge, rules, source metadata, user test results, locations, risk levels, and audit logs. (MVP will use a robust local PostgreSQL Docker container).
 - **Amazon OpenSearch Service**: Stores vector embeddings for semantic search and RAG retrieval.
@@ -200,6 +201,7 @@ graph TD
 - Orchestrates agents via LangGraph.
 - Calls Amazon Rekognition for computer vision.
 - Stores results in the local PostgreSQL container (simulating AWS RDS).
+- **Amazon API Gateway**: Used in the final deployment to route traffic securely to the backend.
 
 ### Computer Vision Layer
 - Powered by **Amazon Rekognition**.

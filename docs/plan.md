@@ -133,4 +133,17 @@ Part 10: Streaming UI Sidebar & Human-in-the-Loop Integration
 
 - Judging Criteria Alignment: Maps to Human-in-the-Loop, Failure Handling, and Demo & Presentation by providing interactive control features, streaming outputs, and solver robustness.
 - Success Criteria: Smooth, token-by-token sidebar text streaming and operational override controls without UI blocking or crashes.
-- Tests: Run integration tests to confirm the app boots, executes scenarios, updates database records, handles CV/API failures, and streams conversational text without runtime failures.
+- Tests: Run integration tests to confirm the app boots, executes scenarios, updates database records, handles CV/API failures, and streams conversational text without runtime failures.
+
+Part 11: Final Production Deployment
+
+[ ] Package the FastAPI backend and LangGraph agents into a production Docker image and push to Amazon ECR.
+[ ] Deploy the backend to AWS Lambda (using Mangum) or Amazon ECS for scalable compute execution.
+[ ] Deploy Amazon API Gateway to act as the secure front door routing requests from the Next.js frontend to the backend API.
+[ ] Migrate from the local PostgreSQL Docker container to a production Amazon RDS PostgreSQL instance.
+[ ] Provision and connect Amazon OpenSearch for production semantic search and vector embeddings.
+[ ] Update Next.js frontend `.env` to point to the production API Gateway URL and deploy the frontend application.
+
+- Judging Criteria Alignment: Maps to Action & Tool Use and Orchestration by ensuring the multi-agent system runs securely and scalably in the cloud.
+- Success Criteria: The web application is accessible via a public URL, handles image uploads, and successfully interacts with the cloud backend through API Gateway.
+- Tests: Execute end-to-end integration tests hitting the API Gateway endpoint to verify AWS RDS, S3, and Rekognition functionality.
