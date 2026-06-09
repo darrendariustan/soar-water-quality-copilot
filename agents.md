@@ -157,17 +157,32 @@ graph TD
 
 ---
 
-## Why AWS Database Is Important
+## Technical Details
 
-The AWS database is a critical component because WaterForAll does not rely solely on live LLM generation. It provides a persistent, auditable, and updateable source of truth.
+- Packaged completely within a Docker container to ensure cross-platform binary compatibility for deep learning and hydraulic simulation dependencies
+- Use uv as the ultra-fast package manager for Python inside the Docker container to handle heavy wheels like torch and wntr efficiently
+- Use structured outputs in JSON format especially across multiple agents and APIs
+- Integrate the Exa API securely using environment variables to fetch external real-time context
+- Use popular visualization libraries
+- As simple as possible but with an elegant corporate-utility UI
 
-The AWS database helps the system:
-- Store trusted drinking water guidance with source URLs and citations.
-- Maintain test kit interpretation rules.
-- Store anonymized community readings to detect repeated parameter failures.
-- Retrieve previous similar cases for RAG-based context.
-- Provide audit logs for safety, compliance, and accountability.
-- Update knowledge dynamically when Exa finds newer guidance.
+## Color Scheme
+
+- Water Blue Primary: #209dd7
+
+## Strategy
+
+1. Write plan with success criteria for each phase to be checked off. Include project scaffolding, Dockerfile configuration using uv, virtual environment setup, and basic validation testing for model loading and API client configuration.
+2. Execute the plan ensuring all criteria are met
+3. Carry out extensive integration testing with localhost or Playwright, fixing UI defects and rendering pipeline anomalies
+4. Only complete when the MVP is finished and tested, with the containerized server running locally and ready for the user
+
+## Coding Standards
+
+1. Use latest versions of libraries and idiomatic approaches as of today
+2. Keep it simple - NEVER over-engineer, ALWAYS simplify, NO unnecessary defensive programming. No extra features - focus on simplicity.
+3. Be concise. Keep README minimal. IMPORTANT: no emojis ever
+4. When hitting issues, always identify root cause before trying a fix. Do not guess. Prove with evidence, then fix the root cause.
 
 ---
 
