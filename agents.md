@@ -56,8 +56,7 @@ The AWS database acts as the system’s source of truth for safe-drinking-water 
 ### AWS Architecture for the MVP and Final Deployment
 - **Amazon API Gateway**: Routes frontend requests to the backend services securely in the final deployment.
 - **Amazon S3**: Stores raw crawled documents, images, test kit photos, and source snapshots.
-- **Amazon RDS PostgreSQL**: Stores structured knowledge, rules, source metadata, user test results, locations, risk levels, and audit logs. (MVP will use a robust local PostgreSQL Docker container).
-- **Amazon OpenSearch Service**: Stores vector embeddings for semantic search and RAG retrieval.
+- **Amazon RDS PostgreSQL**: Stores structured knowledge, rules, source metadata, user test results, locations, risk levels, and audit logs. (MVP will use a robust local PostgreSQL Docker container with `pgvector` for semantic search and RAG retrieval).
 - **AWS Lambda or ECS**: Runs ingestion jobs, Exa crawl jobs, data cleaning, and agent backend logic.
 - **Amazon Rekognition**: Used for Computer Vision to read water test kits and assess water clarity.
 - **Amazon Bedrock or external LLM API**: Generates user-friendly explanations using retrieved knowledge, orchestrated via LangGraph.
@@ -128,7 +127,7 @@ graph TD
 1. **Master Water Safety Agent**: Coordinates all agents and produces the final user-friendly recommendation.
 2. **Computer Vision Agent**: Reads the water test kit, detects water appearance, checks image quality, and estimates confidence.
 3. **Water Quality Interpretation Agent**: Maps test kit readings to simple categories such as safe, caution, unsafe, or requires laboratory testing.
-4. **AWS Knowledge Retrieval Agent**: Searches the stored safe drinking water knowledge base in Amazon RDS and OpenSearch.
+4. **AWS Knowledge Retrieval Agent**: Searches the stored safe drinking water knowledge base in Amazon RDS (via `pgvector`).
 5. **Exa Web Crawl Agent**: Searches and crawls trusted public sources when the database does not have enough information or when guidance needs updating.
 6. **Treatment Guidance Agent**: Suggests practical next steps such as settling, filtering, boiling, safe storage, or avoiding the water.
 7. **Community Reporting Agent**: Stores anonymized results and identifies repeated unsafe readings in the same area.
@@ -220,7 +219,7 @@ graph TD
 - Exa crawls trusted web sources
 - Raw content stored in Amazon S3
 - Structured knowledge stored in Amazon RDS PostgreSQL
-- Embeddings stored in Amazon OpenSearch
+- Vector embeddings stored in PostgreSQL using `pgvector`
 - Safety rules stored in database tables
 
 ### Analytics Layer

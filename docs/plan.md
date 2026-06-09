@@ -65,7 +65,7 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
     - `master_agent.py`: The LangGraph supervisor that coordinates the agents, aggregates parameters, and compiles final recommendations.
     - `cv_agent.py`: LangGraph node to read the water test kit and clarity via `cv_tool.py`.
     - `water_quality_agent.py`: Maps parameter readings (pH, chlorine, turbidity, nitrate, nitrite, hardness, iron) to risk categories.
-    - `aws_retrieval_agent.py`: Queries AWS OpenSearch/RDS PostgreSQL tables for water safety rules and guides.
+    - `aws_retrieval_agent.py`: Queries PostgreSQL/pgvector tables for water safety rules and guides.
     - `exa_crawl_agent.py`: Invokes the Exa crawl tool to search trusted public sources (WHO, CDC, etc.) for missing/outdated rules.
     - `treatment_guidance_agent.py`: Determines practical household water treatment actions (settling, filtering, boiling, safe storage).
     - `community_reporting_agent.py`: Stores anonymized results and updates local area trends.
