@@ -3,9 +3,10 @@ import numpy as np
 
 from .models import WaterAppearance, WaterSampleResult
 
-_SAFETY_DISCLAIMER = (
-    "Visual appearance alone cannot confirm whether water is safe to drink."
-)
+_WARNINGS = [
+    "Visual appearance alone cannot confirm whether water is safe to drink.",
+    "Cloudy water should be settled or filtered before boiling, but boiling does not remove chemical contaminants.",
+]
 
 _PARTICLE_MIN_AREA = 30
 _PARTICLE_THRESHOLD = 5
@@ -72,5 +73,5 @@ def classify_water_sample(img: np.ndarray) -> WaterSampleResult:
             visible_particles=visible_particles,
         ),
         overall_confidence=overall_confidence,
-        warnings=[_SAFETY_DISCLAIMER],
+        warnings=list(_WARNINGS),
     )

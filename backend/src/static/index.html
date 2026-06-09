@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WaterForAll CV Tester</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #1a1a2e; min-height: 100vh; }
+  header { background: #032147; color: #fff; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; }
+  header span { font-size: 0.8rem; opacity: 0.6; }
+  .container { max-width: 900px; margin: 32px auto; padding: 0 24px; }
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid #dde3ec; margin-bottom: 28px; }
+  .tab { padding: 10px 24px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #555; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+  .tab.active { color: #209dd7; border-bottom-color: #209dd7; }
+  .tab:hover:not(.active) { color: #333; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .upload-area { border: 2px dashed #c0cce0; border-radius: 10px; padding: 36px; text-align: center; background: #fff; cursor: pointer; transition: border-color 0.15s; }
+  .upload-area:hover, .upload-area.dragover { border-color: #209dd7; background: #f0f8ff; }
+  .upload-area input[type=file] { display: none; }
+  .upload-area .icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .upload-area p { color: #666; font-size: 0.9rem; }
+  .upload-area .label { color: #209dd7; font-weight: 600; cursor: pointer; }
+  #preview-strip, #preview-sample { max-height: 180px; border-radius: 8px; margin-top: 14px; display: none; object-fit: contain; }
+  .btn { display: inline-block; margin-top: 20px; padding: 10px 32px; background: #209dd7; color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn:hover { background: #1880b0; }
+  .btn:disabled { background: #aaa; cursor: default; }
+  .spinner { display: none; width: 22px; height: 22px; border: 3px solid #cde8f5; border-top-color: #209dd7; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 18px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result-section { margin-top: 28px; }
+  .headline { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+  .chip-blue { background: #e0f3fc; color: #0e6896; }
+  .chip-green { background: #e2f4e8; color: #1a6b34; }
+  .chip-yellow { background: #fef9e7; color: #7a6000; }
+  .chip-red { background: #fdecea; color: #8b1a1a; }
+  .chip-grey { background: #edf0f4; color: #444; }
+  .banner { border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 0.85rem; line-height: 1.6; }
+  .banner-red { background: #fdecea; border-left: 4px solid #e03e2d; color: #6b1717; }
+  .banner-yellow { background: #fffbea; border-left: 4px solid #f0c03a; color: #6b5000; }
+  .banner strong { display: block; margin-bottom: 4px; }
+  .params-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 18px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .params-table th { background: #032147; color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+  .params-table td { padding: 9px 12px; border-bottom: 1px solid #eef1f5; vertical-align: middle; }
+  .params-table tr:last-child td { border-bottom: none; }
+  .risk-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .risk-low { background: #e2f4e8; color: #1a6b34; }
+  .risk-neutral { background: #edf0f4; color: #444; }
+  .risk-warning { background: #fef9e7; color: #7a6000; }
+  .risk-boiling { background: #fff0e0; color: #8b3a00; }
+  .risk-treatment { background: #fdecea; color: #8b1a1a; }
+  .colour-swatch { width: 20px; height: 20px; border-radius: 4px; display: inline-block; border: 1px solid rgba(0,0,0,0.15); vertical-align: middle; margin-right: 6px; }
+  .json-block { background: #1e2736; color: #c9d1d9; border-radius: 8px; padding: 16px; font-size: 0.78rem; line-height: 1.6; overflow-x: auto; white-space: pre; margin-top: 10px; max-height: 360px; overflow-y: auto; }
+  .json-key { color: #79c0ff; }
+  .json-str { color: #a5d6ff; }
+  .json-num { color: #f2cc60; }
+  .json-bool { color: #ff7b72; }
+  details { margin-top: 14px; }
+  details summary { cursor: pointer; font-size: 0.85rem; color: #209dd7; font-weight: 600; padding: 4px 0; }
+  .quality-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .appearance-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .error-box { background: #fdecea; border: 1px solid #e03e2d; border-radius: 8px; padding: 14px 18px; color: #6b1717; font-size: 0.9rem; margin-top: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>WaterForAll CV Tester</h1>
+  <span>Member 2 — Computer Vision Module</span>
+</header>
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('strip')">Test Strip</div>
+    <div class="tab" onclick="switchTab('sample')">Water Sample</div>
+  </div>
+
+  <!-- Test Strip Panel -->
+  <div class="panel active" id="panel-strip">
+    <div class="upload-area" id="drop-strip" onclick="document.getElementById('file-strip').click()"
+         ondragover="event.preventDefault();this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleDrop(event,'strip')">
+      <div class="icon">&#127746;</div>
+      <p>Drag and drop a test strip image, or <span class="label">browse</span></p>
+      <p style="font-size:0.78rem;color:#999;margin-top:6px">JPEG, PNG, WebP</p>
+      <input type="file" id="file-strip" accept="image/*" onchange="previewFile('strip')">
+      <img id="preview-strip" alt="preview">
+    </div>
+    <button class="btn" id="btn-strip" onclick="analyseStrip()">Analyse Strip</button>
+    <div class="spinner" id="spin-strip"></div>
+    <div id="result-strip" class="result-section"></div>
+  </div>
+
+  <!-- Water Sample Panel -->
+  <div class="panel" id="panel-sample">
+    <div class="upload-area" id="drop-sample" onclick="document.getElementById('file-sample').click()"
+         ondragover="event.preventDefault();this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleDrop(event,'sample')">
+      <div class="icon">&#128167;</div>
+      <p>Drag and drop a water sample image, or <span class="label">browse</span></p>
+      <p style="font-size:0.78rem;color:#999;margin-top:6px">JPEG, PNG, WebP</p>
+      <input type="file" id="file-sample" accept="image/*" onchange="previewFile('sample')">
+      <img id="preview-sample" alt="preview">
+    </div>
+    <button class="btn" id="btn-sample" onclick="analyseSample()">Analyse Sample</button>
+    <div class="spinner" id="spin-sample"></div>
+    <div id="result-sample" class="result-section"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='strip')||(i===1&&t==='sample')));
+  document.querySelectorAll('.panel').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='strip')||(i===1&&t==='sample')));
+}
+
+function previewFile(type) {
+  const input = document.getElementById('file-' + type);
+  const img = document.getElementById('preview-' + type);
+  if (input.files[0]) {
+    img.src = URL.createObjectURL(input.files[0]);
+    img.style.display = 'block';
+  }
+}
+
+function handleDrop(e, type) {
+  e.preventDefault();
+  document.getElementById('drop-' + type).classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const input = document.getElementById('file-' + type);
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  previewFile(type);
+}
+
+function setLoading(type, on) {
+  document.getElementById('btn-' + type).disabled = on;
+  document.getElementById('spin-' + type).style.display = on ? 'block' : 'none';
+}
+
+async function analyseStrip() {
+  const file = document.getElementById('file-strip').files[0];
+  if (!file) { alert('Please select an image first.'); return; }
+  setLoading('strip', true);
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch('/analyze/test-strip', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) { renderError('strip', data.detail || 'Server error'); return; }
+    renderStripResult('strip', data);
+  } catch(e) { renderError('strip', e.message); }
+  finally { setLoading('strip', false); }
+}
+
+async function analyseSample() {
+  const file = document.getElementById('file-sample').files[0];
+  if (!file) { alert('Please select an image first.'); return; }
+  setLoading('sample', true);
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch('/analyze/water-sample', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) { renderError('sample', data.detail || 'Server error'); return; }
+    renderSampleResult('sample', data);
+  } catch(e) { renderError('sample', e.message); }
+  finally { setLoading('sample', false); }
+}
+
+function riskBadgeClass(cat) {
+  const m = { low:'risk-low', neutral:'risk-neutral', treatment_required:'risk-treatment', boiling_resistant_warning:'risk-boiling' };
+  return m[cat] || 'risk-neutral';
+}
+
+function confChip(val) {
+  const pct = Math.round(val * 100);
+  const cls = pct >= 70 ? 'chip-green' : pct >= 40 ? 'chip-yellow' : 'chip-red';
+  return `<span class="chip ${cls}">Confidence: ${pct}%</span>`;
+}
+
+function blurChip(b) {
+  const cls = b === 'low' ? 'chip-green' : b === 'medium' ? 'chip-yellow' : 'chip-red';
+  return `<span class="chip ${cls}">Blur: ${b}</span>`;
+}
+
+function brightnessChip(b) {
+  const cls = b === 'acceptable' ? 'chip-green' : 'chip-yellow';
+  return `<span class="chip ${cls}">Brightness: ${b}</span>`;
+}
+
+function swatch(rgb) {
+  return `<span class="colour-swatch" style="background:rgb(${rgb[0]},${rgb[1]},${rgb[2]})"></span>`;
+}
+
+function renderStripResult(target, d) {
+  const el = document.getElementById('result-' + target);
+  let html = '';
+
+  html += `<div class="headline">
+    <span class="chip chip-blue">${d.image_type}</span>
+    <span class="chip chip-grey">Kit: ${d.kit_id}</span>
+    ${confChip(d.overall_confidence)}
+  </div>`;
+
+  if (d.boiling_resistant_risk_flags && d.boiling_resistant_risk_flags.length > 0) {
+    html += `<div class="banner banner-red"><strong>Boiling-Resistant Risk Detected</strong>`;
+    d.boiling_resistant_risk_flags.forEach(f => {
+      html += `<div><b>${f.parameter}</b> [${f.risk_level}] &mdash; ${f.reason}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.warnings && d.warnings.length > 0) {
+    html += `<div class="banner banner-yellow"><strong>Important Warnings</strong>`;
+    d.warnings.forEach(w => html += `<div>${w}</div>`);
+    html += `</div>`;
+  }
+
+  if (d.image_quality) {
+    const q = d.image_quality;
+    html += `<div class="quality-grid">
+      ${brightnessChip(q.brightness)}
+      ${blurChip(q.blur)}
+      ${q.lighting_warning ? '<span class="chip chip-yellow">Lighting Warning</span>' : ''}
+      ${q.glare_warning ? '<span class="chip chip-red">Glare Detected</span>' : ''}
+    </div>`;
+  }
+
+  html += `<table class="params-table">
+    <thead><tr><th>Parameter</th><th>Estimated Value</th><th>Confidence</th><th>Risk</th><th>Matched Colour</th><th>Distance</th></tr></thead>
+    <tbody>`;
+  (d.parameters || []).forEach(p => {
+    html += `<tr>
+      <td><b>${p.name}</b>${p.message ? `<br><span style="font-size:0.76rem;color:#888">${p.message}</span>` : ''}</td>
+      <td>${p.estimated_value} ${p.unit}</td>
+      <td>${Math.round(p.confidence * 100)}%</td>
+      <td><span class="risk-badge ${riskBadgeClass(p.risk_category)}">${p.risk_category.replace(/_/g,' ')}</span></td>
+      <td>${swatch(p.matched_colour.rgb)} rgb(${p.matched_colour.rgb.join(',')})</td>
+      <td>${p.colour_distance}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+
+  html += `<details><summary>View raw JSON</summary><div class="json-block">${syntaxHighlight(d)}</div></details>`;
+  el.innerHTML = html;
+}
+
+function renderSampleResult(target, d) {
+  const el = document.getElementById('result-' + target);
+  let html = '';
+
+  html += `<div class="headline">
+    <span class="chip chip-blue">${d.image_type}</span>
+    ${confChip(d.overall_confidence)}
+  </div>`;
+
+  if (d.warnings && d.warnings.length > 0) {
+    html += `<div class="banner banner-yellow"><strong>Important Warnings</strong>`;
+    d.warnings.forEach(w => html += `<div>${w}</div>`);
+    html += `</div>`;
+  }
+
+  const ap = d.appearance;
+  html += `<div class="appearance-grid">
+    <span class="chip chip-grey">Clarity: ${ap.clarity.replace(/_/g,' ')}</span>
+    <span class="chip chip-grey">Colour: ${ap.colour.replace(/_/g,' ')}</span>
+    <span class="chip ${ap.visible_particles ? 'chip-red' : 'chip-green'}">Particles: ${ap.visible_particles ? 'detected' : 'none'}</span>
+  </div>`;
+
+  html += `<details><summary>View raw JSON</summary><div class="json-block">${syntaxHighlight(d)}</div></details>`;
+  el.innerHTML = html;
+}
+
+function renderError(target, msg) {
+  document.getElementById('result-' + target).innerHTML = `<div class="error-box">Error: ${msg}</div>`;
+}
+
+function syntaxHighlight(obj) {
+  const str = JSON.stringify(obj, null, 2);
+  return str.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+    let cls = 'json-num';
+    if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-str';
+    else if (/true|false/.test(match)) cls = 'json-bool';
+    return `<span class="${cls}">${match}</span>`;
+  });
+}
+</script>
+</body>
+</html>

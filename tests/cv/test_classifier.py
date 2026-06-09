@@ -23,6 +23,11 @@ class TestClassifyWaterSample:
         result = classify_water_sample(img)
         assert any("cannot confirm" in w for w in result.warnings)
 
+    def test_includes_boiling_warning(self):
+        img = _solid_image(200, 210, 220)
+        result = classify_water_sample(img)
+        assert any("boiling does not remove" in w.lower() for w in result.warnings)
+
     def test_confidence_in_valid_range(self):
         img = _solid_image(180, 180, 180)
         result = classify_water_sample(img)
@@ -44,7 +49,6 @@ class TestClassifyWaterSample:
         assert result.appearance.colour == "colourless"
 
     def test_no_particles_on_uniform_image(self):
-        # A perfectly uniform image has no contours above threshold
         img = _solid_image(200, 200, 200)
         result = classify_water_sample(img)
         assert result.appearance.visible_particles is False

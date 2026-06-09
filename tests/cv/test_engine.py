@@ -33,10 +33,24 @@ class TestAssessImageQuality:
         assert quality.brightness == "high"
 
     def test_uniform_image_has_high_blur(self):
-        # Uniform solid colour has zero Laplacian variance -> high blur
         img = _solid_image(128, 128, 128)
         quality = assess_image_quality(img)
         assert quality.blur == "high"
+
+    def test_glare_warning_on_very_bright_image(self):
+        img = _solid_image(248, 248, 248)
+        quality = assess_image_quality(img)
+        assert quality.glare_warning is True
+
+    def test_no_glare_on_mid_brightness(self):
+        img = _solid_image(150, 150, 150)
+        quality = assess_image_quality(img)
+        assert quality.glare_warning is False
+
+    def test_returns_glare_warning_field(self):
+        img = _solid_image(128, 128, 128)
+        quality = assess_image_quality(img)
+        assert hasattr(quality, "glare_warning")
 
 
 class TestExtractColourRegions:
@@ -62,45 +76,80 @@ class TestExtractColourRegions:
 class TestMatchColourToChart:
     def test_exact_match_gives_high_confidence(self):
         entries = [
-            {"value": "7.0", "rgb": [255, 180, 80], "hsv": [30, 175, 255]},
-            {"value": "8.0", "rgb": [120, 200, 80], "hsv": [96, 150, 200]},
+            {"value": "7.0", "unit": "", "rgb": [255, 180, 80], "hsv": [30, 175, 255], "risk_level": "neutral"},
+            {"value": "8.0", "unit": "", "rgb": [120, 200, 80], "hsv": [96, 150, 200], "risk_level": "neutral"},
         ]
-        best, confidence = match_colour_to_chart([255, 180, 80], entries)
+        best, confidence, dist = match_colour_to_chart([255, 180, 80], entries)
         assert best["value"] == "7.0"
         assert confidence > 0.9
+        assert dist >= 0.0
 
     def test_far_colour_gives_low_confidence(self):
         entries = [
-            {"value": "7.0", "rgb": [255, 180, 80], "hsv": [30, 175, 255]},
+            {"value": "7.0", "unit": "", "rgb": [255, 180, 80], "hsv": [30, 175, 255], "risk_level": "neutral"},
         ]
-        _, confidence = match_colour_to_chart([0, 0, 0], entries)
+        _, confidence, _ = match_colour_to_chart([0, 0, 0], entries)
         assert confidence < 0.3
 
     def test_selects_nearest_entry(self):
         entries = [
-            {"value": "A", "rgb": [200, 100, 50], "hsv": [0, 0, 0]},
-            {"value": "B", "rgb": [50,  200, 50], "hsv": [0, 0, 0]},
+            {"value": "A", "unit": "", "rgb": [200, 100, 50], "hsv": [0, 0, 0], "risk_level": "low"},
+            {"value": "B", "unit": "", "rgb": [50,  200, 50], "hsv": [0, 0, 0], "risk_level": "low"},
         ]
-        best, _ = match_colour_to_chart([205, 105, 55], entries)
+        best, _, _ = match_colour_to_chart([205, 105, 55], entries)
         assert best["value"] == "A"
+
+    def test_returns_colour_distance(self):
+        entries = [
+            {"value": "7.0", "unit": "", "rgb": [255, 180, 80], "hsv": [30, 175, 255], "risk_level": "neutral"},
+        ]
+        _, _, dist = match_colour_to_chart([255, 180, 80], entries)
+        assert dist == 0.0
 
 
 class TestAnalyseTestStrip:
-    def test_returns_test_strip_result(self):
+    def test_returns_strip_analysis_result(self):
         img = _solid_image(200, 150, 100, h=200, w=60)
         result = analyse_test_strip(img)
         assert isinstance(result, StripAnalysisResult)
         assert result.image_type == "test_strip"
 
+    def test_includes_kit_id(self):
+        img = _solid_image(200, 150, 100, h=200, w=60)
+        result = analyse_test_strip(img)
+        assert result.kit_id == "generic_16_in_1"
+
     def test_number_of_parameters_matches_chart(self):
         img = _solid_image(200, 150, 100, h=200, w=60)
         result = analyse_test_strip(img)
-        assert len(result.parameters) == 5  # default chart has 5 params
+        assert len(result.parameters) == 7  # generic_16_in_1 has 7 params
 
-    def test_includes_safety_warning(self):
+    def test_parameters_have_risk_category(self):
         img = _solid_image(200, 150, 100, h=200, w=60)
         result = analyse_test_strip(img)
-        assert any("does not replace laboratory testing" in w for w in result.warnings)
+        for p in result.parameters:
+            assert p.risk_category in ("boiling_resistant_warning", "treatment_required", "low", "neutral")
+
+    def test_parameters_have_colour_distance(self):
+        img = _solid_image(200, 150, 100, h=200, w=60)
+        result = analyse_test_strip(img)
+        for p in result.parameters:
+            assert p.colour_distance >= 0.0
+
+    def test_parameters_have_message(self):
+        img = _solid_image(200, 150, 100, h=200, w=60)
+        result = analyse_test_strip(img)
+        for p in result.parameters:
+            assert isinstance(p.message, str)
+
+    def test_includes_all_four_safety_warnings(self):
+        img = _solid_image(200, 150, 100, h=200, w=60)
+        result = analyse_test_strip(img)
+        warnings_text = " ".join(result.warnings)
+        assert "does not replace laboratory testing" in warnings_text
+        assert "Boiling does not remove" in warnings_text
+        assert "every contaminant" in warnings_text
+        assert "Water Quality Agent" in warnings_text
 
     def test_confidence_in_valid_range(self):
         img = _solid_image(200, 150, 100, h=200, w=60)
@@ -108,3 +157,13 @@ class TestAnalyseTestStrip:
         assert 0.0 <= result.overall_confidence <= 1.0
         for p in result.parameters:
             assert 0.0 <= p.confidence <= 1.0
+
+    def test_image_quality_has_glare_warning_field(self):
+        img = _solid_image(200, 150, 100, h=200, w=60)
+        result = analyse_test_strip(img)
+        assert hasattr(result.image_quality, "glare_warning")
+
+    def test_boiling_resistant_risk_flags_is_list(self):
+        img = _solid_image(200, 150, 100, h=200, w=60)
+        result = analyse_test_strip(img)
+        assert isinstance(result.boiling_resistant_risk_flags, list)

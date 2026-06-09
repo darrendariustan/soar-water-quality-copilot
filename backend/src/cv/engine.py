@@ -7,17 +7,36 @@ import cv2
 import numpy as np
 
 from .models import (
+    BoilingRiskFlag,
     ImageQuality,
     MatchedColour,
     ParameterReading,
     StripAnalysisResult,
 )
 
-_SAFETY_DISCLAIMER = (
-    "This is an estimated reading from image analysis and does not replace laboratory testing."
-)
+_WARNINGS = [
+    "This is an estimated reading from image analysis and does not replace laboratory testing.",
+    "Boiling does not remove heavy metals or many chemical contaminants.",
+    "This test kit does not test every contaminant.",
+    "Final safety guidance must be handled by the Water Quality Agent and Treatment Guidance Agent.",
+]
 
-_DEFAULT_CHART = Path(__file__).parent / "reference_charts" / "default_strip.json"
+_BOILING_RESISTANT_PARAMS = {"nitrate", "nitrite", "iron"}
+
+_PARAM_MESSAGES = {
+    "nitrate": "Boiling does not remove nitrate. Do not treat boiling as sufficient.",
+    "nitrite": "Boiling does not remove nitrite. Seek alternative water sources if elevated.",
+    "iron": "High iron may indicate corrosion or contamination. Boiling does not remove iron.",
+    "pH": "Extreme pH may indicate chemical contamination.",
+    "free_chlorine": "High chlorine may indicate over-treatment. Low chlorine may indicate microbial risk.",
+    "hardness": "Water hardness is generally not a direct health risk at moderate levels.",
+    "turbidity": "Turbid water should be settled or filtered before treatment. Boiling does not remove suspended solids.",
+}
+
+_DEFAULT_CHART = Path(__file__).parent / "reference_charts" / "generic_16_in_1.json"
+
+_GLARE_THRESHOLD = 245
+_GLARE_MIN_AREA_FRACTION = 0.02
 
 
 def load_image(source: Union[str, Path, bytes]) -> np.ndarray:
@@ -52,9 +71,23 @@ def assess_image_quality(img: np.ndarray) -> ImageQuality:
     else:
         blur = "low"
 
-    lighting_warning = brightness != "acceptable" or blur == "high"
+    glare_warning = _detect_glare(img)
+    lighting_warning = brightness != "acceptable" or blur == "high" or glare_warning
 
-    return ImageQuality(brightness=brightness, blur=blur, lighting_warning=lighting_warning)
+    return ImageQuality(
+        brightness=brightness,
+        blur=blur,
+        lighting_warning=lighting_warning,
+        glare_warning=glare_warning,
+    )
+
+
+def _detect_glare(img: np.ndarray) -> bool:
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, bright_mask = cv2.threshold(gray, _GLARE_THRESHOLD, 255, cv2.THRESH_BINARY)
+    total_pixels = img.shape[0] * img.shape[1]
+    bright_pixels = int(np.sum(bright_mask > 0))
+    return (bright_pixels / total_pixels) > _GLARE_MIN_AREA_FRACTION
 
 
 def _rgb_to_hsv_tuple(r: int, g: int, b: int) -> list[int]:
@@ -64,18 +97,16 @@ def _rgb_to_hsv_tuple(r: int, g: int, b: int) -> list[int]:
 
 
 def _delta_e(rgb1: list[int], rgb2: list[int]) -> float:
-    """Euclidean distance in RGB space, normalised to [0, 1]."""
     dr = rgb1[0] - rgb2[0]
     dg = rgb1[1] - rgb2[1]
     db = rgb1[2] - rgb2[2]
-    dist = math.sqrt(dr * dr + dg * dg + db * db)
-    return dist / math.sqrt(3 * 255 * 255)
+    return math.sqrt(dr * dr + dg * dg + db * db) / math.sqrt(3 * 255 * 255)
 
 
 def match_colour_to_chart(
     sample_rgb: list[int], chart_entries: list[dict]
-) -> tuple[dict, float]:
-    """Return (best_entry, confidence) where confidence is 1 - normalised_distance."""
+) -> tuple[dict, float, float]:
+    """Return (best_entry, confidence, raw_distance)."""
     best_entry = None
     best_dist = float("inf")
     for entry in chart_entries:
@@ -83,18 +114,11 @@ def match_colour_to_chart(
         if d < best_dist:
             best_dist = d
             best_entry = entry
-    # Scale confidence: distance of 0 -> 1.0, distance >= 0.3 -> 0.0
     confidence = max(0.0, round(1.0 - (best_dist / 0.3), 3))
-    return best_entry, confidence
+    return best_entry, confidence, round(best_dist * 441.67, 2)  # scale to 0–441 Euclidean range
 
 
-def extract_colour_regions(
-    img: np.ndarray, num_regions: int
-) -> list[list[int]]:
-    """
-    Divide the image into num_regions horizontal bands and return mean RGB per band.
-    Simple approach suitable for vertical test strips.
-    """
+def extract_colour_regions(img: np.ndarray, num_regions: int) -> list[list[int]]:
     h, w = img.shape[:2]
     band_h = h // num_regions
     samples = []
@@ -108,6 +132,16 @@ def extract_colour_regions(
     return samples
 
 
+def _risk_level_to_category(risk_level: str, param_name: str) -> str:
+    if risk_level == "critical":
+        return "treatment_required"
+    if risk_level == "warning" and param_name in _BOILING_RESISTANT_PARAMS:
+        return "boiling_resistant_warning"
+    if risk_level == "warning":
+        return "treatment_required"
+    return risk_level  # "low" or "neutral"
+
+
 def analyse_test_strip(
     img: np.ndarray,
     chart_path: Union[str, Path, None] = None,
@@ -117,30 +151,52 @@ def analyse_test_strip(
         chart = json.load(f)
 
     quality = assess_image_quality(img)
-    parameters_def = chart["parameters"]
-    colour_samples = extract_colour_regions(img, len(parameters_def))
+    param_names = list(chart["parameters"].keys())
+    colour_samples = extract_colour_regions(img, len(param_names))
 
     readings: list[ParameterReading] = []
-    for param_def, sample_rgb in zip(parameters_def, colour_samples):
-        best_entry, confidence = match_colour_to_chart(sample_rgb, param_def["entries"])
+    risk_flags: list[BoilingRiskFlag] = []
+
+    for param_name, sample_rgb in zip(param_names, colour_samples):
+        entries = chart["parameters"][param_name]
+        best_entry, confidence, colour_distance = match_colour_to_chart(sample_rgb, entries)
+
+        risk_level = best_entry.get("risk_level", "low")
+        risk_category = _risk_level_to_category(risk_level, param_name)
+        message = _PARAM_MESSAGES.get(param_name, "")
+
+        if risk_level in ("warning", "critical"):
+            risk_flags.append(
+                BoilingRiskFlag(
+                    parameter=param_name,
+                    risk_level=risk_level,
+                    reason=f"Estimated {param_name} result is {best_entry['value']} {best_entry['unit']}. {message}".strip(),
+                )
+            )
+
         readings.append(
             ParameterReading(
-                name=param_def["name"],
+                name=param_name,
                 estimated_value=best_entry["value"],
-                unit=param_def["unit"],
+                unit=best_entry["unit"],
+                risk_category=risk_category,
                 matched_colour=MatchedColour(
                     rgb=best_entry["rgb"],
                     hsv=best_entry["hsv"],
                 ),
+                colour_distance=colour_distance,
                 confidence=confidence,
+                message=message,
             )
         )
 
     overall_confidence = round(sum(r.confidence for r in readings) / len(readings), 3)
 
     return StripAnalysisResult(
+        kit_id=chart["kit_id"],
         parameters=readings,
+        boiling_resistant_risk_flags=risk_flags,
         overall_confidence=overall_confidence,
         image_quality=quality,
-        warnings=[_SAFETY_DISCLAIMER],
+        warnings=list(_WARNINGS),
     )
