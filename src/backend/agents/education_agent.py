@@ -10,9 +10,13 @@ from agents.llm import generate_text, stream_text, LLMUnavailable
 from agents.state import GraphState
 
 _SYSTEM = (
-    "You are a water safety educator for communities with limited lab access. "
-    "Explain clearly in plain language, max 4 short sentences. No emojis. "
-    "Do not contradict the provided assessment or treatment steps."
+    "You are a water safety educator for communities with limited lab access.\n"
+    "Plan-Execute-Reflect instructions:\n"
+    "- PLAN: Review the provided context (risk level, parameters, and recommended steps).\n"
+    "- EXECUTE: Explain the diagnosis and practical treatment steps clearly in plain language. "
+    "Keep it to a maximum of 4 short, actionable sentences. No emojis.\n"
+    "- REFLECT: Ensure you do not contradict the provided assessment or treatment steps. "
+    "Do NOT include any defensive filler text, caveats, or generic AI disclaimers."
 )
 
 

@@ -73,6 +73,12 @@ def master_agent(state: GraphState) -> dict:
         for s in exa.sources:
             exa_contexts.append({"title": s.title, "url": s.url, "summary": s.summary})
 
+    is_emergency = state.get("degraded", False)
+    degraded_caps = state.get("degraded_capabilities", [])
+    emergency_reason = None
+    if is_emergency and degraded_caps:
+        emergency_reason = f"Offline fallback mode active. Missing capabilities: {', '.join(degraded_caps)}"
+
     result = WaterTestResult(
         id=str(uuid.uuid4()),
         timestamp=datetime.now(timezone.utc).isoformat(),
@@ -87,6 +93,8 @@ def master_agent(state: GraphState) -> dict:
         warnings=warnings,
         sources=sources,
         exaContexts=exa_contexts,
+        isEmergencyFallback=is_emergency,
+        emergencyFallbackReason=emergency_reason,
     )
     return {"result": result}
 

@@ -2,7 +2,7 @@
 
 ```text
 water-for-all/
-├── .env.example                # Blueprint for system keys (AWS, EXA, OPENAI/BEDROCK)
+├── .env.example                # Blueprint for system keys (AWS, EXA, OPENAI)
 ├── .gitignore                  # Strict filters blocking environment secrets, caches, and logs
 ├── agents.md                   # Master file defining the 9-agent orchestration system
 ├── README.md                   # Minimal deployment guides and core architectural summary
@@ -133,7 +133,7 @@ graph TD
     Compute -->|Store Raw Snapshots & Images| S3[(Amazon S3)]
     Compute -->|Query/Store Rules & Logs| RDS[(Amazon RDS PostgreSQL)]
     Compute -->|Semantic Vector Search| OS[(Amazon OpenSearch Service)]
-    Compute -->|Generate Safety Explanations| Bedrock[Amazon Bedrock / LLM API]
+    Compute -->|Generate Safety Explanations| LLM[LLM API (OpenAI / Local)]
     
     Exa[Exa Crawl API] -->|Web Crawled Data| Compute
 ```

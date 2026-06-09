@@ -89,18 +89,18 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
 Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
-[ ] Add manual scenario controls (e.g., draggable sliders for Turbidity, Chlorine, pH, Nitrate) to the Next.js React frontend so the demo can manually inject parameter anomalies without needing a live photo.
+[x] Add manual scenario controls (e.g., draggable sliders for Turbidity, Chlorine, pH, Nitrate) to the Next.js React frontend so the demo can manually inject parameter anomalies without needing a live photo.
 
-[ ] Implement the CV submission orchestration flow:
+[x] Implement the CV submission orchestration flow:
     - Added `POST /api/analyze` to handle multipart physical image uploads which processes bytes via `process_submission` and maps the results into the `master_agent` pipeline.
     - Added `POST /cv/submissions` to handle manual JSON parameter inputs and maps them into the `master_agent` pipeline.
     - Implemented `process_submission()` in `src/backend/cv/submission_handler.py`.
 
 1. User uploads 1-3 images in the UI (or uses manual scenario controls) -> POST `/cv/submissions` (`src/backend/main.py`). 
 
-2. For each image, kit type is taken from the declared kit_types form field or inferred by `kit_classifier.py` (local heuristic or Bedrock). 
+2. For each image, kit type is taken from the declared kit_types form field or inferred by `kit_classifier.py` (local heuristic or LLM). 
 
-3. Each image is routed to its processor: generic 16-in-1 strip (`engine.py`), heavy metals strip (`heavy_metals_processor.py`), or TDS meter (`tds_processor.py`). In AWS mode these call Bedrock Claude Haiku via `aws_provider.py`; in local mode they use OpenCV heuristics. 
+3. Each image is routed to its processor: generic 16-in-1 strip (`engine.py`), heavy metals strip (`heavy_metals_processor.py`), or TDS meter (`tds_processor.py`). In cloud mode these call the LLM API via `aws_provider.py`; in local mode they use OpenCV heuristics. 
 
 4. Per-image ImageResults are aggregated into a single SubmissionResult, including deduplicated `combined_boiling_resistant_risk_flags` (highest severity per parameter). 
 
@@ -108,7 +108,7 @@ Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
 6. The CV module deliberately stops at readings, confidence scores, and boiling-resistant risk flags; it never declares water safe or unsafe. Final guidance is handed off to the downstream Water Quality and Treatment agents.
 
-[ ] Make the results UI react to risk: shift result cards and banners by risk_category and boiling-risk severity - neutral/low readings render in the primary Water Blue (#209dd7), treatment_required/warning shift to amber, and critical/boiling-resistant flags shift to red with a prominent warning banner.
+[x] Make the results UI react to risk: shift result cards and banners by risk_category and boiling-risk severity - neutral/low readings render in the primary Water Blue (#209dd7), treatment_required/warning shift to amber, and critical/boiling-resistant flags shift to red with a prominent warning banner.
 
 - Judging Criteria Alignment: Maps to Orchestration, Human-in-the-Loop, and Story Arc Alignment by letting the presenter force scenarios and observe the multi-image CV pipeline react end to end.
 
@@ -130,9 +130,9 @@ Part 7: Exa API Integration via Web Crawl Agent
 
 Part 8: External LLM Client Integration and Exception Handling
 
-[ ] Configure the LLM API client framework (Bedrock/OpenAI) using the secure environment variables to drive agent reasoning.
+[x] Configure the LLM API client framework (OpenAI compatible) using the secure environment variables to drive agent reasoning.
 
-[ ] Implement localized emergency failure handling: If external endpoints (LLM or Exa) timeout or fail, the Master Agent catches the exception, activates a localized emergency state, maps the frontend to pure local rules/CV algorithms, and flashes a warning banner.
+[x] Implement localized emergency failure handling: If external endpoints (LLM or Exa) timeout or fail, the Master Agent catches the exception, activates a localized emergency state, maps the frontend to pure local rules/CV algorithms, and flashes a warning banner.
 
 - Judging Criteria Alignment: Maps to Failure Handling and Orchestration by establishing fallback pathways for external services.
 - Success Criteria: API exceptions do not crash the app, but instead trigger a clean downgrade to local-only diagnostics.
@@ -140,11 +140,11 @@ Part 8: External LLM Client Integration and Exception Handling
 
 Part 9: Prompt Engineering and Hub-and-Spoke Orchestration
 
-[ ] Define the structured JSON schemas passed exclusively between the specialized agents and the central Master Agent (avoiding global broadcasts).
+[x] Define the structured JSON schemas passed exclusively between the specialized agents and the central Master Agent (avoiding global broadcasts).
 
-[ ] Program prompt templates for each agent in `src/backend/agents/` that define their roles, enforce the localized Plan-Execute-Reflect reasoning, and prevent defensive filler text.
+[x] Program prompt templates for each agent in `src/backend/agents/` that define their roles, enforce the localized Plan-Execute-Reflect reasoning, and prevent defensive filler text.
 
-[ ] Implement the asynchronous communication flow routing all specialist payloads strictly through the central Master Agent.
+[x] Implement the asynchronous communication flow routing all specialist payloads strictly through the central Master Agent.
 
 - Judging Criteria Alignment: Maps to Orchestration and Autonomy & Decision-Making by establishing a clean Hub-and-Spoke communication layer.
 - Success Criteria: Master Agent coordinates CV, water quality, and treatment guidance outputs purely using structured JSON payloads.
