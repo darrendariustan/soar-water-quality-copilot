@@ -1,3 +1,7 @@
+## CV Module (Member 2)
+
+Computer vision for test strip reading and water sample classification. See [docs/cv_module.md](docs/cv_module.md) for setup, usage, and JSON output formats.
+
 ### Proposed Scaffolding
 
 ```text
