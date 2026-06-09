@@ -9,122 +9,128 @@ Part 1: Plan and Scaffolding Verification
     - `src/tools/`
     - `src/pipelines/`
     - `models/`
-    - `data/epanet/`
+    - `data/`
     - `data/raw/`
     - `data/processed/`
     - `notebooks/`
     - `scripts/`
     - `docs/`
-[ ] Establish validation checks for mock data payloads.
+[ ] Establish validation checks for mock water test and appearance image metadata payloads.
 
-- Judging Criteria Alignment: Maps to Agent Overview by validating the core identity, layout, and purpose of the Hydraulic Copilot before coding.
+- Judging Criteria Alignment: Maps to Agent Overview by validating the core identity, layout, and purpose of the WaterForAll Assistant before coding.
 - Success Criteria: Execution architecture verification and workspace scaffolding setup.
 - Tests: Structural file existence check for agents, tools, and app.
 
 Part 2: Docker Infrastructure and Environment Setup
 
-[ ] Write a root-level `Dockerfile` utilizing multi-stage builds and `uv` to install dependencies including `torch` and `wntr`.
+[ ] Write a root-level `Dockerfile` utilizing multi-stage builds and `uv` to install dependencies including computer vision and machine learning packages.
 [ ] Configure `.env` mapping for environmental secrets management (`OPENAI_API_KEY`, `EXA_API_KEY`).
 [ ] Write localized execution scripts (`start-server.sh`, `start-server.bat`, `stop-server.sh`, and `stop-server.bat`) inside `scripts/`.
 
 - Judging Criteria Alignment: Maps to Actions & Tool Use and Failure Handling by setting up the closed, cross-platform container sandbox environment that isolates OS-specific engineering dependencies.
-- Success Criteria: Docker image compiles cleanly using `uv` package manager; container runs a baseline Streamlit page accessible at localhost:8501.
+- Success Criteria: Docker image compiles cleanly using `uv` package manager; container runs a baseline application page accessible at localhost.
 - Tests: Execute container ping test; verify `uv` lockfile generation integrity.
 
 Part 3: Static Asset Integration and Caching
 
-[ ] Place EPANET network file `network.inp` inside `data/epanet/` and baseline telemetry dataset `water_potability.csv` inside `data/raw/`.
-[ ] Place ML checkpoints (`potability_model.pkl` and PyTorch physics-informed neural network weights `weights.pth`) inside `models/`.
-[ ] Implement `st.cache_resource` wrapper pipelines in the app to load `network.inp` via WNTR and the ML classification model weights exactly once.
+[ ] Place baseline reference color charts for test strips inside `data/raw/` and placeholder classification models inside `models/`.
+[ ] Implement image loading and processing pipelines using appropriate caching wrappers (`st.cache_resource` or equivalent) to load reference charts and classification model weights exactly once.
 
-- Judging Criteria Alignment: Maps to Actions & Tool Use by binding the backend simulation and neural network environments as local execution tools.
+- Judging Criteria Alignment: Maps to Actions & Tool Use by binding backend classification and computer vision tools as local execution helpers.
 - Success Criteria: App boots instantly without repeating heavy disk read routines on user window reruns.
-- Tests: Assert model checkpoints load successfully; verify WNTR parses network junctions without errors.
+- Tests: Assert model checkpoints/reference charts load successfully; verify the image processing parser loads without errors.
 
-Part 4: Geospatial Network Dashboard Layout
+Part 4: WaterForAll Dashboard Layout
 
-[ ] Implement a single-page Streamlit view in [app.py](file:///c:/Users/User/OneDrive - Universitat Ramón Llull/Desktop/2026-jobs/PUB/hackathon/src/app.py) mapped to a sleek dark utility UI theme.
-[ ] Define the layout with three main columns:
-    1. Geospatial Network Topology Map: Heatmap showing pressure and water-age using Plotly or PyVis.
-    2. Anomaly Alert Panel: Detailed display showing leak probabilities, potability indexes, and physics residual scores.
-    3. Exa Context Panel: Dedicated section rendering real-time retrieved geospatial context.
+[ ] Implement a single-page view (e.g., Streamlit in `src/app.py` or equivalent framework) mapped to a sleek dark utility UI theme with Water Blue Primary (`#209dd7`).
+[ ] Define the layout with three main sections:
+    1. Water Image & Test Strip Upload Section: Interface to upload water appearance photos and test strip results.
+    2. Safety Diagnosis & Advice Panel: Displays classification readings, confidence, safety risk level (Safe, Caution, Unsafe), and treatment recommendations.
+    3. Community Risk Dashboard: Visualizes repeated unsafe readings, common parameter failures, trends over time, and location hotspots.
 [ ] Add a sidebar for the multi-agent conversational chat interface.
 
 - Judging Criteria Alignment: Maps to Demo & Presentation by structuring a high-fidelity, scannable corporate utility dashboard.
-- Success Criteria: Clean, responsive rendering of network nodes with scannable labels on canvas loading.
-- Tests: Verification of visual element DOM mounting via Streamlit AppTest framework.
+- Success Criteria: Clean, responsive rendering of image upload controls, parameters, and interactive charts on canvas loading.
+- Tests: Verification of visual element DOM mounting via tests.
 
-Part 5: Decoupled Multi-Agent and Tool Implementation
+Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
 [ ] Implement isolated tools inside `src/tools/`:
-    - `epanet_tool.py`: Wraps WNTR to programmatically interact with and modify `.inp` network topologies on-the-fly.
-    - `ml_model_tool.py`: Handles local evaluation checkpoints for classical classification (`potability_model.pkl`) and deep physics-informed structural tensors.
-    - `sensor_tool.py`: Manages structural sensor array mappings, downsampling high-density grid fields to sparse telemetry feeds.
-    - `rag_tool.py`: Performs targeted geospatial queries against the Exa API for context (road closures, weather, excavation permits).
+    - `cv_tool.py`: Handles local computer vision analysis of test strip colors and water clarity.
+    - `aws_db_tool.py`: Implements RDS PostgreSQL and S3 mock integrations for structured tables (Knowledge, Rule, User Test Result, Community Risk) and raw files.
+    - `rag_search_tool.py`: Performs vector search or semantic matching against knowledge tables using OpenSearch indices.
+    - `exa_crawl_tool.py`: Performs targeted search/crawls against the Exa API for trusted sources.
 [ ] Implement specialized, autonomous agents inside `src/agents/` driven by a localized Plan-Execute-Reflect loop:
-    - `planner_agent.py`: Central supervisor/router parsing operator queries/UI events and routing tasks using structured JSON.
-    - `simulation_agent.py`: Manages physical state calculations, velocity, water age, and mass-balance using the EPANET solver tool.
-    - `risk_agent.py`: Evaluates leak probabilities and potability anomalies using the ML model tool.
-    - `explanation_agent.py`: Synthesizes technical parameters and RAG context into natural-language briefings for field crews.
+    - `master_agent.py`: Coordinates the agents, aggregates parameters, and compiles final recommendations.
+    - `cv_agent.py`: Reads the water test kit and clarity, evaluates image quality and confidence.
+    - `water_quality_agent.py`: Maps parameter readings (pH, chlorine, turbidity, nitrate, nitrite, hardness, iron) to risk categories.
+    - `aws_retrieval_agent.py`: Queries AWS OpenSearch/RDS PostgreSQL tables for water safety rules and guides.
+    - `exa_crawl_agent.py`: Invokes the Exa crawl tool to search trusted public sources (WHO, CDC, etc.) for missing/outdated rules.
+    - `treatment_guidance_agent.py`: Determines practical household water treatment actions (settling, filtering, boiling, safe storage).
+    - `community_reporting_agent.py`: Stores anonymized results and updates local area trends.
+    - `education_agent.py`: Explains concepts in simple terms.
+    - `safety_agent.py`: Inspects advice to prevent hazardous guidelines (e.g. advising boiling for chemical contaminants).
 [ ] Implement compute automation pipelines inside `src/pipelines/`:
-    - `train_potability_model.py`: Offline processing code to build or update model assets.
-    - `run_water_quality_scenario.py`: Deterministic end-to-end pipeline simulating anomalies.
+    - `ingest_knowledge.py`: Ingests and embeds crawling results into OpenSearch/PostgreSQL.
+    - `evaluate_cv_model.py`: Validates CV model classifications on test strip datasets.
 
 - Judging Criteria Alignment: Maps to Agent Overview, Autonomy & Decision-Making, Actions & Tool Use, and Compute Automation Boundaries by building decoupled agents, isolated tools, and execution pipelines.
-- Success Criteria: Specialist agents successfully interact with tools and pipelines, communicating with the Planner Agent using structured JSON control payloads.
+- Success Criteria: Specialist agents successfully interact with tools and pipelines, communicating with the Master Agent using structured JSON control payloads.
 - Tests: Deterministic unit tests confirming individual agents and pipelines process data payloads and output expected structures.
 
-Part 6: Injected Leak Scenario State Controls and Orchestration Flow
+Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
-[ ] Create UI controls (scenario triggers) in [app.py](file:///c:/Users/User/OneDrive - Universitat Ramón Llull/Desktop/2026-jobs/PUB/hackathon/src/app.py) to trigger pre-configured "Injected Water Quality & Leak Scenarios" to contrast normal operations against anomalies.
+[ ] Create UI controls (scenario triggers/dropdowns) in the app to trigger pre-configured "Water Quality Scenarios" (e.g., Safe Water, Microbiological Outbreak, Chemical Contamination) to contrast normal operations against anomalies.
 [ ] Implement the orchestration flow upon scenario trigger:
-    1. UI scenario trigger -> `planner_agent.py`.
-    2. `planner_agent.py` calls `sensor_tool.py` and delegates to `simulation_agent.py` to isolate hydraulic changes.
-    3. `simulation_agent.py` processes state via `epanet_tool.py` and returns metrics.
-    4. `planner_agent.py` passes metrics to `risk_agent.py`, which calls `ml_model_tool.py` to evaluate potability and leak vectors.
-    5. `planner_agent.py` aggregates all data, calls `rag_tool.py` (Exa API), and commands `explanation_agent.py` to stream a structural breakdown to the UI sidebar.
-[ ] Update the map dynamically on alert triggers, pivoting layout states from stable green to red alert zones.
+    1. UI scenario trigger or image upload -> `master_agent.py`.
+    2. `master_agent.py` invokes `cv_agent.py` (via `cv_tool.py`) to extract parameters.
+    3. `master_agent.py` delegates to `water_quality_agent.py` to identify risks.
+    4. `master_agent.py` coordinates with `aws_retrieval_agent.py` to fetch stored safety guides.
+    5. If details are missing, `master_agent.py` activates `exa_crawl_agent.py` to query Exa API.
+    6. `master_agent.py` executes `treatment_guidance_agent.py` and `safety_agent.py` to produce safety warnings/guidelines.
+    7. `master_agent.py` commands `community_reporting_agent.py` to store anonymized analytics data.
+[ ] Update the dashboard elements dynamically on alert triggers, shifting the theme from safe primary blue/green to warning/danger (orange/red).
 
 - Judging Criteria Alignment: Maps to Human-in-the-Loop, Orchestration, and Story Arc Alignment by allowing the presenter/operator to force anomalies and observe the live multi-agent reaction.
-- Success Criteria: Toggling the demo switch shifts the interface state smoothly from a standard profile to a red alert view with updated explanation panels and retrieval data.
+- Success Criteria: Toggling the demo switch shifts the interface state smoothly from a standard profile to a warning/danger view with updated explanation panels and retrieval data.
 - Tests: Verify session state mutations and that the end-to-end data pipeline completes successfully without UI freezing.
 
-Part 7: Exa API Integration via RAG Tool
+Part 7: Exa API Integration via Web Crawl Agent
 
-[ ] Integrate `rag_tool.py` with the external Exa API, routing requests securely using the `EXA_API_KEY`.
-[ ] Construct targeted spatial search queries (weather anomalies, excavation permits, road closures) matching coordinates of flagged nodes.
-[ ] Render the structured context headlines within the dedicated Exa sidebar/dashboard component.
+[ ] Integrate `exa_crawl_tool.py` with the external Exa API, routing requests securely using the `EXA_API_KEY`.
+[ ] Construct targeted search queries matching coordinates/country, contaminant parameters, and trusted domains (e.g., who.int, cdc.gov).
+[ ] Render the structured context headlines and summaries within the retrieval context dashboard component.
 
-- Judging Criteria Alignment: Maps to Actions & Tool Use and Autonomy & Decision-Making by empowering the RAG tool to fetch real-world context for anomalous network locations.
-- Success Criteria: Geospatial queries return clean, structured real-time local context relevant to the simulated coordinates.
+- Judging Criteria Alignment: Maps to Actions & Tool Use and Autonomy & Decision-Making by empowering the RAG tool to fetch real-world context for anomalous parameter coordinates.
+- Success Criteria: Web query results return clean, structured real-time context relevant to the parameter and region.
 - Tests: Mock API integration testing ensuring graceful handling of network timeouts or empty search results payloads.
 
-Part 8: AI Chat Connectivity and Exception Handling
+Part 8: External LLM Client Integration and Exception Handling
 
-[ ] Configure the OpenAI API client framework using the secure `OPENAI_API_KEY` to drive agent reasoning.
-[ ] Implement localized emergency failure handling: If external endpoints (OpenAI or Exa) timeout or fail, the Planner Agent catches the exception, activates a localized emergency state, maps the frontend to pure mathematical telemetry, and flashes a warning banner.
+[ ] Configure the LLM API client framework (Bedrock/OpenAI) using the secure environment variables to drive agent reasoning.
+[ ] Implement localized emergency failure handling: If external endpoints (LLM or Exa) timeout or fail, the Master Agent catches the exception, activates a localized emergency state, maps the frontend to pure local rules/CV algorithms, and flashes a warning banner.
 
 - Judging Criteria Alignment: Maps to Failure Handling and Orchestration by establishing fallback pathways for external services.
-- Success Criteria: API exceptions do not crash the app, but instead trigger a clean downgrade to mathematical/local-only telemetry.
+- Success Criteria: API exceptions do not crash the app, but instead trigger a clean downgrade to local-only diagnostics.
 - Tests: Force connection timeouts or use invalid credentials and verify that the dashboard switches to emergency fallback mode with a warning banner.
 
 Part 9: Prompt Engineering and Hub-and-Spoke Orchestration
 
-[ ] Define the structured JSON schemas passed exclusively between the specialized agents and the central Planner Agent (avoiding global broadcasts).
+[ ] Define the structured JSON schemas passed exclusively between the specialized agents and the central Master Agent (avoiding global broadcasts).
 [ ] Program prompt templates for each agent in `src/agents/` that define their roles, enforce the localized Plan-Execute-Reflect reasoning, and prevent defensive filler text.
-[ ] Implement the asynchronous communication flow routing all specialist payloads strictly through the central Planner Agent.
+[ ] Implement the asynchronous communication flow routing all specialist payloads strictly through the central Master Agent.
 
 - Judging Criteria Alignment: Maps to Orchestration and Autonomy & Decision-Making by establishing a clean Hub-and-Spoke communication layer.
-- Success Criteria: Planner Agent coordinates simulation, risk, and explanation outputs purely using structured JSON payloads.
+- Success Criteria: Master Agent coordinates CV, water quality, and treatment guidance outputs purely using structured JSON payloads.
 - Tests: Validate that structured JSON output schemas match input constraints for each agent.
 
 Part 10: Streaming UI Sidebar & Human-in-the-Loop Integration
 
-[ ] Implement a collapsible conversational chat sidebar in [app.py](file:///c:/Users/User/OneDrive - Universitat Ramón Llull/Desktop/2026-jobs/PUB/hackathon/src/app.py).
-[ ] Use `st.write_stream` to stream the explanation agent's dispatch briefings and responses.
-[ ] Implement operator review controls: allow the operator to override automated decisions, input custom conversational focus constraints, and approve/veto generated field dispatch logs before execution.
-[ ] Implement simulation divergence handling: If the hydraulic solver encounters mathematical matrix division errors or numerical divergence during an aggressive scenario, the Simulation Agent catches the exception and falls back to pre-cached stable historical solver states.
+[ ] Implement a collapsible conversational chat sidebar in the application layout.
+[ ] Use streaming responses to stream the Education Agent's explanations and responses.
+[ ] Implement operator review controls: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the AWS tables.
+[ ] Implement CV tool divergence/failure handling: If the computer vision module fails to detect colors due to poor lighting, catch the exception and fall back to manual parameter inputs with an alert banner.
 
 - Judging Criteria Alignment: Maps to Human-in-the-Loop, Failure Handling, and Demo & Presentation by providing interactive control features, streaming outputs, and solver robustness.
 - Success Criteria: Smooth, token-by-token sidebar text streaming and operational override controls without UI blocking or crashes.
-- Tests: Run integration tests (using AppTest or Playwright) to confirm the app boots, executes scenarios, updates telemetry metrics, handles solver failures, and streams conversational text without runtime failures.
+- Tests: Run integration tests to confirm the app boots, executes scenarios, updates database records, handles CV/API failures, and streams conversational text without runtime failures.
