@@ -53,8 +53,7 @@ export function ChatAssistant({ activeScenario, result, onUpdateParams }: ChatAs
         parameters: result.parameters?.reduce((acc: any, p) => ({ ...acc, [p.name]: p.value }), {})
       } : undefined;
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${API_URL}/api/chat/stream`, {
+      const res = await fetch(`/api/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
