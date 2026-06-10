@@ -16,7 +16,7 @@ interface SampleInputProps {
   activeScenario: ScenarioId | null;
   running: boolean;
   onScenario: (s: ScenarioId) => void;
-  onUpload: (waterImage: File, testStripImage?: File) => void;
+  onUpload: (waterImage: File, testStripImages: File[]) => void;
   onManualSubmit?: (params: Record<string, number>) => void;
 }
 
@@ -133,9 +133,9 @@ export function SampleInput({
   onManualSubmit,
 }: SampleInputProps) {
   const [waterImage, setWaterImage] = useState<File | null>(null);
-  const [stripImage, setStripImage] = useState<File | null>(null);
   const [waterPreview, setWaterPreview] = useState<string | null>(null);
-  const [stripPreview, setStripPreview] = useState<string | null>(null);
+  const [stripImages, setStripImages] = useState<File[]>([]);
+  const [stripPreviews, setStripPreviews] = useState<string[]>([]);
 
   const [isManualMode, setIsManualMode] = useState(false);
   const [manualParams, setManualParams] = useState({
@@ -153,6 +153,30 @@ export function SampleInput({
     },
     []
   );
+
+  const addStrips = (files: FileList | null) => {
+    if (!files) return;
+    const incoming = Array.from(files);
+    setStripImages((prev) => {
+      const combined = [...prev, ...incoming].slice(0, 3);
+      Promise.all(
+        combined.map(
+          (f) =>
+            new Promise<string>((resolve) => {
+              const r = new FileReader();
+              r.onload = (e) => resolve(e.target?.result as string);
+              r.readAsDataURL(f);
+            })
+        )
+      ).then(setStripPreviews);
+      return combined;
+    });
+  };
+
+  const removeStrip = (idx: number) => {
+    setStripImages((prev) => prev.filter((_, i) => i !== idx));
+    setStripPreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   return (
     <div className="rounded-3xl border border-line bg-paper p-6 shadow-sm">
@@ -244,7 +268,7 @@ export function SampleInput({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-4">
           <DropZone
             label="Water photo"
             preview={waterPreview}
@@ -257,18 +281,55 @@ export function SampleInput({
               setWaterPreview(null);
             }}
           />
-          <DropZone
-            label="Test strip photo (optional)"
-            preview={stripPreview}
-            onFile={(f) => {
-              setStripImage(f);
-              read(f, setStripPreview);
-            }}
-            onClear={() => {
-              setStripImage(null);
-              setStripPreview(null);
-            }}
-          />
+
+          <div>
+            <label className="mb-2 block text-xs font-medium text-ink-soft">
+              Test kit photos (optional, up to 3)
+            </label>
+            <div className="rounded-2xl border-2 border-dashed border-line p-3 hover:border-water-300">
+              {stripPreviews.length > 0 && (
+                <div className="mb-3 grid grid-cols-3 gap-2">
+                  {stripPreviews.map((src, i) => (
+                    <div
+                      key={i}
+                      className="relative overflow-hidden rounded-lg border border-line"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={`Test kit ${i + 1}`}
+                        className="h-20 w-full object-cover"
+                      />
+                      <button
+                        onClick={() => removeStrip(i)}
+                        className="absolute right-1 top-1 rounded-full bg-paper/90 p-0.5 text-ink-soft hover:text-ink"
+                        aria-label="Remove image"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {stripImages.length < 3 && (
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-paper-soft px-3 py-3 text-sm text-ink-soft hover:text-ink">
+                  <ImageIcon className="h-4 w-4" />
+                  Add test kit photo(s)
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => addStrips(e.target.files)}
+                  />
+                </label>
+              )}
+              <p className="mt-2 text-center text-[11px] text-ink-soft/70">
+                Add multiple kits if you have them (e.g. a 16-in-1 strip, a heavy
+                metals strip, and a TDS meter).
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -279,7 +340,7 @@ export function SampleInput({
           if (isManualMode && onManualSubmit) {
             onManualSubmit(manualParams);
           } else if (waterImage) {
-            onUpload(waterImage, stripImage || undefined);
+            onUpload(waterImage, stripImages);
           }
         }}
         disabled={(!isManualMode && !waterImage) || running}

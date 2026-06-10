@@ -5,8 +5,13 @@ from typing import Optional
 
 from schemas import WaterQualityAnalysisRequest, WaterAppearancePayload, WaterTestStripPayload
 from agents.master_agent import run_pipeline
+from agents.schemas import WaterTestResult
 from cv.submission_handler import process_submission
+from cv.classifier import classify_water_sample
+from cv.engine import load_image
 import os
+import uuid
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 # Load .env from the project root if it exists
@@ -118,60 +123,115 @@ async def chat_stream(req: ChatMessageRequest):
     
     return StreamingResponse(generate(), media_type="text/event-stream")
 
+_CLARITY_LABEL = {"clear": "Clear", "cloudy": "Cloudy", "colored": "Colored", "contaminated": "Cloudy"}
+
+
+def _classify_appearance(water_bytes: bytes):
+    """Visual-only appearance from the water photo. Returns (ui_appearance, particle_detected, confidence)."""
+    sample = classify_water_sample(load_image(water_bytes))
+    a = sample.appearance
+    if a.visible_particles or a.clarity == "opaque":
+        ui = "contaminated"
+    elif a.colour != "colourless":
+        ui = "colored"
+    elif a.clarity in ("cloudy", "slightly_cloudy"):
+        ui = "cloudy"
+    else:
+        ui = "clear"
+    return ui, a.visible_particles, round(sample.overall_confidence, 3)
+
+
 @app.post("/api/analyze")
 async def analyze_photos(
     water_image: UploadFile = File(...),
-    test_strip_image: Optional[UploadFile] = File(None),
+    test_strip_images: Optional[list[UploadFile]] = File(None),
     area_id: Optional[str] = Form(None)
 ):
+    water_bytes = await water_image.read()
+    ui_appearance, particles, appearance_conf = _classify_appearance(water_bytes)
+
+    strips = test_strip_images or []
+
+    # No test kit: a photo cannot measure chemical parameters, so we report a
+    # visual-only screen instead of inferring pH/chlorine/nitrate/etc.
+    if not strips:
+        if ui_appearance == "clear":
+            risk = "unknown"
+            summary = (
+                "The water looks clear, but a photo cannot measure chemical safety. "
+                "Use a test strip or seek laboratory testing to confirm."
+            )
+            warnings = []
+        else:
+            risk = "caution"
+            summary = (
+                f"The water appears {ui_appearance}. Appearance alone cannot confirm safety, "
+                "so do not assume it is safe to drink."
+            )
+            warnings = [
+                "Discoloured or cloudy water can indicate sediment, iron or chemical "
+                "contamination. Boiling does not remove chemicals or metals."
+            ]
+        return WaterTestResult(
+            id=str(uuid.uuid4()),
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            scenario="custom",
+            scenarioLabel="Photo Upload Analysis (visual only)",
+            waterAppearance=ui_appearance,
+            overallRisk=risk,
+            confidence=appearance_conf,
+            summary=summary,
+            parameters=[],
+            recommendations=[
+                "A photo cannot measure pH, chlorine, nitrate, nitrite, hardness or iron. Use a test strip for those readings.",
+                "Let the water settle, then filter it through a clean cloth or household filter.",
+                "Seek a proper water test before drinking, especially if the water is discoloured or cloudy.",
+            ],
+            warnings=warnings,
+            sources=["World Health Organization: Guidelines for Drinking-water Quality, 4th edition"],
+        )
+
+    # One or more test kit images provided: classify each kit, read it, and merge
+    # the standard parameter readings across all images. Up to 3 images supported.
     image_items = []
-    
-    # Only pass test strip image to process_submission if present
-    # since submission_handler is designed to parse kits/meters.
-    if test_strip_image:
-        strip_bytes = await test_strip_image.read()
-        image_items.append((strip_bytes, None))
-    else:
-        # fallback to passing water image if no strip provided
-        water_bytes = await water_image.read()
-        image_items.append((water_bytes, None))
-        
-    sub_res = process_submission(image_items, cv_provider="local")
-    
-    # Extract params from cv results
+    for s in strips[:3]:
+        image_items.append((await s.read(), None))
+    sub_res = process_submission(image_items, cv_provider=os.getenv("CV_PROVIDER", "local"))
+
     params = {}
-    strip_conf = 0.5 # Default low confidence if no parsing
-    if sub_res.results:
-        res = sub_res.results[0]
-        strip_conf = res.overall_confidence
+    kit_types = []
+    confidences = []
+    for res in sub_res.results:
+        kit_types.append(res.kit_type)
+        confidences.append(res.overall_confidence)
         for p in res.parameters:
             try:
                 key = p.name.lower()
                 val = float(p.estimated_value)
-                if 'ph' in key:
-                    params['ph'] = val
-                elif 'chlorine' in key:
-                    params['chlorine_residual_ppm'] = val
-                elif 'turbidity' in key:
-                    params['turbidity_ntu'] = val
-                elif 'nitrate' in key:
-                    params['nitrate_ppm'] = val
-                elif 'nitrite' in key:
-                    params['nitrite_ppm'] = val
-                elif 'hardness' in key:
-                    params['hardness_ppm'] = val
-                elif 'iron' in key:
-                    params['iron_ppm'] = val
-            except Exception:
-                pass
+            except (TypeError, ValueError):
+                continue
+            if 'ph' in key:
+                params['ph'] = val
+            elif 'chlorine' in key:
+                params['chlorine_residual_ppm'] = val
+            elif 'turbidity' in key:
+                params['turbidity_ntu'] = val
+            elif 'nitrate' in key:
+                params['nitrate_ppm'] = val
+            elif 'nitrite' in key:
+                params['nitrite_ppm'] = val
+            elif 'hardness' in key:
+                params['hardness_ppm'] = val
+            elif 'iron' in key:
+                params['iron_ppm'] = val
+    strip_conf = max(confidences) if confidences else 0.5
 
     appearance_payload = WaterAppearancePayload(
         image_url="uploaded://water",
-        clarity_classification="clear",
-        particle_detected=False,
-        confidence_score=1.0,
+        clarity_classification=_CLARITY_LABEL.get(ui_appearance, "Clear"),
+        particle_detected=particles,
+        confidence_score=appearance_conf,
     )
-    
     strip_payload = WaterTestStripPayload(
         image_url="uploaded://strip",
         ph=params.get("ph"),
@@ -183,19 +243,15 @@ async def analyze_photos(
         iron_ppm=params.get("iron_ppm"),
         confidence_score=strip_conf,
     )
-    
     wq_req = WaterQualityAnalysisRequest(
         user_id="upload_user",
         location=area_id,
         appearance=appearance_payload,
-        test_strip=strip_payload
+        test_strip=strip_payload,
     )
-    
-    result = run_pipeline(
+    return run_pipeline(
         request=wq_req,
         scenario="custom",
         scenario_label="Photo Upload Analysis",
-        manual_overrides=None
+        manual_overrides=None,
     )
-    
-    return result

@@ -55,10 +55,10 @@ export default function AppPage() {
     runPipeline(() => runScenario(scenario, areaId ?? undefined));
   };
 
-  const handleUpload = (waterImage: File, testStripImage?: File) => {
+  const handleUpload = (waterImage: File, testStripImages: File[] = []) => {
     setActiveScenario(null);
     runPipeline(() =>
-      analyzeWaterTest(waterImage, testStripImage, areaId ?? undefined)
+      analyzeWaterTest(waterImage, testStripImages, areaId ?? undefined)
     );
   };
 

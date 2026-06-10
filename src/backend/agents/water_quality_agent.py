@@ -20,6 +20,10 @@ _STRIP_PARAMS = [
     "iron_ppm",
 ]
 
+# Visible water appearance contributes to the overall verdict even when the test
+# strip readings look fine (for example visibly discoloured or cloudy water).
+_APPEARANCE_RISK = {"clear": "safe", "cloudy": "caution", "colored": "caution", "contaminated": "unsafe"}
+
 
 def _worst(risks: list[str]) -> str:
     if not risks:
@@ -83,8 +87,18 @@ def water_quality_agent(state: GraphState) -> dict:
         if classified["risk_level"] in ("caution", "unsafe"):
             failed.append(classified["label"])
 
-    overall = _worst([r.riskLevel for r in readings])
+    risks = [r.riskLevel for r in readings]
+    appearance_risk = _APPEARANCE_RISK.get(appearance, "safe")
+    risks.append(appearance_risk)
+    overall = _worst(risks)
+
     contamination = _contamination_type(by_key, appearance)
+    # Surface discoloured/cloudy water as a named concern and, if nothing else
+    # flagged it, attach practical settle/filter guidance.
+    if appearance_risk in ("caution", "unsafe"):
+        failed.append("water appearance")
+        if contamination == "none":
+            contamination = "turbidity"
 
     assessment = QualityAssessment(
         parameters=readings,

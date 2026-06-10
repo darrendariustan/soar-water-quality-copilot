@@ -76,8 +76,15 @@ export function DiagnosisPanel({ result, running, onReevaluate }: DiagnosisPanel
           <h2 className="mt-2 font-display text-2xl font-semibold text-ink">
             {result.scenarioLabel}
           </h2>
-          <p className="text-sm text-ink-soft">
-            Water appears {result.waterAppearance}
+          <p className="mt-1 text-base text-ink-soft">
+            Water appears{" "}
+            <span
+              className={`font-semibold ${
+                result.waterAppearance === "clear" ? "text-ink" : "text-caution"
+              }`}
+            >
+              {result.waterAppearance}
+            </span>
           </p>
         </div>
         <ConfidenceRing value={result.confidence} color={theme.hex} />
