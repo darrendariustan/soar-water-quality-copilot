@@ -53,11 +53,18 @@ export function ChatAssistant({ activeScenario, result, onUpdateParams }: ChatAs
         parameters: result.parameters?.reduce((acc: any, p) => ({ ...acc, [p.name]: p.value }), {})
       } : undefined;
 
+      let payloadMessage = userMsg.content;
+      const lowerContent = userMsg.content.toLowerCase();
+      const triggerWords = ["change", "update", "adjust", "set", "modify", "fix"];
+      if (triggerWords.some(word => lowerContent.includes(word))) {
+        payloadMessage += "\n\n(System Note: Execute the parameter update immediately by appending exactly [UPDATE_PARAMS: {\"parameter_name\": value}] to the very end of your response. Ensure the JSON is valid. Available keys: ph, chlorine_residual_ppm, turbidity_ntu, nitrate_ppm, nitrite_ppm, hardness_ppm, iron_ppm.)";
+      }
+
       const res = await fetch(`/api/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          message: userMsg.content,
+          message: payloadMessage,
           history: messages.map(m => ({ role: m.role, content: m.content })),
           scenario: activeScenario ?? undefined,
           context: contextDict
@@ -86,7 +93,7 @@ export function ChatAssistant({ activeScenario, result, onUpdateParams }: ChatAs
                     setMessages((prev) => prev.map((msg) => {
                       if (msg.id === assistantId) {
                         let newContent = msg.content + parsed.text;
-                        const match = newContent.match(/\[UPDATE_PARAMS:\s*(\{.*?\})\s*\]/);
+                        const match = newContent.match(/\[UPDATE_PARAMS:\s*(\{[\s\S]*?\})\s*\]/);
                         if (match) {
                           try {
                             extractedParams = JSON.parse(match[1]);
