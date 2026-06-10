@@ -17,6 +17,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 # Ensure virtual environment executables are used
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app/src/backend"
 
 # Copy source code
 COPY src/backend ./src/backend

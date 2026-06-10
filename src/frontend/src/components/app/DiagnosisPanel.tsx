@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, BookOpen, FlaskConical } from "lucide-react";
+import { AlertTriangle, BookOpen, FlaskConical, CheckCircle, XCircle, SlidersHorizontal, ShieldAlert } from "lucide-react";
 import type { WaterTestResult } from "@/types";
 import { riskThemes } from "@/lib/risk";
 import { ConfidenceRing } from "./ConfidenceRing";
@@ -9,9 +10,38 @@ import { ConfidenceRing } from "./ConfidenceRing";
 interface DiagnosisPanelProps {
   result: WaterTestResult | null;
   running: boolean;
+  onReevaluate?: (params: Record<string, number>) => void;
 }
 
-export function DiagnosisPanel({ result, running }: DiagnosisPanelProps) {
+export function DiagnosisPanel({ result, running, onReevaluate }: DiagnosisPanelProps) {
+  const [reviewStatus, setReviewStatus] = useState<"pending" | "approved" | "vetoed">("pending");
+  const [showAdjustParams, setShowAdjustParams] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, number>>({});
+
+  const getParamKey = (name: string) => {
+    const key = name.toLowerCase();
+    if (key.includes('ph')) return 'ph';
+    if (key.includes('chlorine')) return 'chlorine_residual_ppm';
+    if (key.includes('turbidity')) return 'turbidity_ntu';
+    if (key.includes('nitrate')) return 'nitrate_ppm';
+    if (key.includes('nitrite')) return 'nitrite_ppm';
+    if (key.includes('hardness')) return 'hardness_ppm';
+    if (key.includes('iron')) return 'iron_ppm';
+    return key.replace(/\s+/g, '_');
+  };
+
+  const handleSaveReevaluate = () => {
+    setShowAdjustParams(false);
+    setReviewStatus("pending");
+    if (onReevaluate && result) {
+      const finalParams: Record<string, number> = {};
+      result.parameters.forEach(p => {
+        const key = getParamKey(p.name);
+        finalParams[key] = overrides[key] !== undefined ? overrides[key] : p.value;
+      });
+      onReevaluate(finalParams);
+    }
+  };
   if (!result) {
     return (
       <div className="flex min-h-[340px] flex-col items-center justify-center rounded-3xl border border-line bg-paper p-8 text-center shadow-sm">
@@ -152,6 +182,85 @@ export function DiagnosisPanel({ result, running }: DiagnosisPanelProps) {
           ))}
         </div>
       )}
+
+      {/* Operator Review Controls */}
+      <div className="mt-8 border-t border-line pt-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-water-600" />
+            <h3 className="font-semibold text-ink">Operator Review</h3>
+          </div>
+          <span className={`text-xs font-medium uppercase tracking-wider ${
+            reviewStatus === "approved" ? "text-safe" : reviewStatus === "vetoed" ? "text-unsafe" : "text-ink-soft"
+          }`}>
+            {reviewStatus}
+          </span>
+        </div>
+        
+        <p className="mb-4 text-sm text-ink-soft">
+          Review the automated diagnosis. You can adjust parameters manually if the CV detection was inaccurate, or approve/veto this hazard alert before it is logged to the community database.
+        </p>
+        
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setShowAdjustParams(!showAdjustParams)}
+            className="flex items-center gap-2 rounded-xl border border-line bg-paper px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-paper-soft"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Adjust Parameters
+          </button>
+          <button
+            onClick={() => setReviewStatus("approved")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+              reviewStatus === "approved"
+                ? "bg-safe text-white"
+                : "border border-safe/30 bg-safe/5 text-safe hover:bg-safe/10"
+            }`}
+          >
+            <CheckCircle className="h-4 w-4" />
+            Approve Alert
+          </button>
+          <button
+            onClick={() => setReviewStatus("vetoed")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+              reviewStatus === "vetoed"
+                ? "bg-unsafe text-white"
+                : "border border-unsafe/30 bg-unsafe/5 text-unsafe hover:bg-unsafe/10"
+            }`}
+          >
+            <XCircle className="h-4 w-4" />
+            Veto Alert
+          </button>
+        </div>
+
+        {showAdjustParams && (
+          <div className="mt-4 rounded-xl border border-line bg-paper-soft p-4">
+            <p className="mb-3 text-sm font-medium text-ink">Manual Parameter Adjustment</p>
+            <div className="space-y-3">
+              {result.parameters.map(p => (
+                <div key={p.name} className="flex items-center justify-between text-sm">
+                  <span className="text-ink-soft">{p.name}</span>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      defaultValue={p.value}
+                      onChange={(e) => setOverrides({...overrides, [getParamKey(p.name)]: parseFloat(e.target.value)})}
+                      className="w-20 rounded border border-line bg-paper px-2 py-1 text-right text-ink focus:border-water-400 focus:outline-none"
+                    />
+                    <span className="w-8 text-xs text-ink-soft">{p.unit}</span>
+                  </div>
+                </div>
+              ))}
+              <button 
+                onClick={handleSaveReevaluate}
+                className="mt-2 w-full rounded-lg bg-water-500 py-2 text-sm font-medium text-white hover:bg-water-600"
+              >
+                Save & Re-evaluate
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Sources */}
       {result.sources.length > 0 && (

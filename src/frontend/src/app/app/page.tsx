@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Droplets } from "lucide-react";
 import type { WaterTestResult, ScenarioId } from "@/types";
@@ -20,6 +20,12 @@ export default function AppPage() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeScenario, setActiveScenario] = useState<ScenarioId | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const resultRef = useRef<WaterTestResult | null>(null);
+
+  // Keep ref in sync to avoid stale closures in chat
+  useEffect(() => {
+    resultRef.current = result;
+  }, [result]);
 
   const runPipeline = async (fetcher: () => Promise<WaterTestResult>) => {
     timers.current.forEach(clearTimeout);
@@ -59,6 +65,45 @@ export default function AppPage() {
   const handleManualSubmit = (params: Record<string, number>) => {
     setActiveScenario(null);
     runPipeline(() => analyzeManualTest(params, areaId ?? undefined));
+  };
+
+  const handleChatUpdateParams = (newParams: Record<string, number>) => {
+    const existingParams: Record<string, number> = {};
+    const currentResult = resultRef.current;
+    if (currentResult && currentResult.parameters) {
+      const map: Record<string, string> = {
+        "ph": "ph",
+        "chlorine": "chlorine_residual_ppm",
+        "turbidity": "turbidity_ntu",
+        "nitrate": "nitrate_ppm",
+        "nitrite": "nitrite_ppm",
+        "hardness": "hardness_ppm",
+        "iron": "iron_ppm"
+      };
+      currentResult.parameters.forEach(p => {
+        const key = p.name.toLowerCase();
+        if (map[key]) {
+          existingParams[map[key]] = p.value;
+        }
+      });
+    }
+    
+    // Normalize newParams keys just in case the LLM outputs "pH" instead of "ph", etc.
+    const normalizedNewParams: Record<string, number> = {};
+    Object.entries(newParams).forEach(([k, v]) => {
+      const lowerK = k.toLowerCase();
+      if (lowerK === 'ph') normalizedNewParams['ph'] = v;
+      else if (lowerK.includes('chlorine')) normalizedNewParams['chlorine_residual_ppm'] = v;
+      else if (lowerK.includes('turbidity')) normalizedNewParams['turbidity_ntu'] = v;
+      else if (lowerK.includes('nitrate')) normalizedNewParams['nitrate_ppm'] = v;
+      else if (lowerK.includes('nitrite')) normalizedNewParams['nitrite_ppm'] = v;
+      else if (lowerK.includes('hardness')) normalizedNewParams['hardness_ppm'] = v;
+      else if (lowerK.includes('iron')) normalizedNewParams['iron_ppm'] = v;
+      else normalizedNewParams[k] = v;
+    });
+
+    const mergedParams = { ...existingParams, ...normalizedNewParams };
+    handleManualSubmit(mergedParams);
   };
 
   return (
@@ -115,13 +160,17 @@ export default function AppPage() {
         </div>
 
         {/* Diagnosis */}
-        <DiagnosisPanel result={result} running={running} />
+        <DiagnosisPanel result={result} running={running} onReevaluate={handleManualSubmit} />
 
         {/* Community */}
         <CommunityRisk areaId={areaId} />
       </main>
 
-      <ChatAssistant activeScenario={activeScenario} />
+      <ChatAssistant 
+        activeScenario={activeScenario} 
+        result={result} 
+        onUpdateParams={handleChatUpdateParams} 
+      />
     </div>
   );
 }

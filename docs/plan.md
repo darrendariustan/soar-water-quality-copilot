@@ -152,11 +152,11 @@ Part 9: Prompt Engineering and Hub-and-Spoke Orchestration
 
 Part 10: Streaming UI Sidebar & Human-in-the-Loop Integration
 
-[ ] Keep the conversational chat assistant as a collapsible overlay for easier integration.
+[x] Keep the conversational chat assistant as a collapsible overlay for easier integration.
 
-[ ] Use Server-Sent Events (SSE) streaming to stream the Education Agent's explanations and responses.
+[x] Use Server-Sent Events (SSE) streaming to stream the Education Agent's explanations and responses.
 
-[ ] Implement operator review controls directly within the Diagnosis Advice Panel: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the database tables (local PostgreSQL for MVP, Amazon RDS for production).
+[x] Implement operator review controls directly within the Diagnosis Advice Panel: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the database tables (local PostgreSQL for MVP, Amazon RDS for production).
 
 [x] Implement CV tool divergence/failure handling: (Skipped as Parts 1 to 9 are robust).
 
@@ -166,9 +166,13 @@ Part 10: Streaming UI Sidebar & Human-in-the-Loop Integration
 
 Part 11: Context-Aware and Agentic UI Chat Assistant
 
-[ ] Pass Dashboard Context to the Chatbot: Pass the current `WaterTestResult` down to the `ChatAssistant` and include it in the `ChatMessageRequest` to provide context to the LLM.
+[x] Pass Dashboard Context to the Chatbot: Pass the current `WaterTestResult` down to the `ChatAssistant` and include it in the `ChatMessageRequest` to provide context to the LLM.
 
-[ ] Enable Agentic UI Control: Instruct the LLM to output `[UPDATE_PARAMS: {"key": value}]` when parameter adjustments are needed, parse this from the SSE stream, and trigger `onUpdateParams` to instantly re-evaluate the dashboard without page reload.
+[x] Enable Agentic UI Control: Instruct the LLM to output `[UPDATE_PARAMS: {"key": value}]` when parameter adjustments are needed, parse this from the SSE stream, and trigger `onUpdateParams` to instantly re-evaluate the dashboard without page reload.
+
+[x] Conversation Memory: Update the backend to accept and utilize the full conversation history from the frontend, ensuring the chatbot can remember previous turns and provide contextually coherent responses.
+
+[x] Agentic Tool Access: Upgrade the chat endpoint into a tool-using agent loop (e.g., LangGraph/LangChain). Equip the chat agent with existing backend tools (`rag_search_tool`, `exa_crawl_tool`, `aws_db_tool`) so it can autonomously look up WHO guidelines, crawl the web, or check community risk data to answer user questions beyond the immediate dashboard context.
 
 - Judging Criteria Alignment: Maps to Human-in-the-Loop, Autonomy & Decision-Making, and Agent Overview by allowing the agent to read current UI state and trigger functional UI updates based on conversational intent.
 - Success Criteria: Chatbot accurately answers questions about the active water sample, and automatically adjusts the UI parameters when asked to do so.
@@ -189,3 +193,9 @@ Part 12: Final Production Deployment
 - Judging Criteria Alignment: Maps to Action & Tool Use and Orchestration by ensuring the multi-agent system runs securely and scalably in the cloud.
 - Success Criteria: The web application is accessible via a public URL, handles image uploads, and successfully interacts with the cloud backend through API Gateway.
 - Tests: Execute end-to-end integration tests hitting the API Gateway endpoint to verify AWS RDS, S3, and Rekognition functionality.
+
+### Verification Plan
+
+1. **Test 4: Community Risk Database Tool (Production)**
+   - In the chat, ask: "Are there any recent issues reported in River Collection Point B?"
+   - Ensure the agent uses the AWS RDS database tool to fetch the risk history for that area in the production environment.

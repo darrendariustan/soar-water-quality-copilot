@@ -49,6 +49,9 @@ def cv_submissions(req: ManualSubmissionRequest):
         chlorine_residual_ppm=req.params.get("chlorine_residual_ppm"),
         turbidity_ntu=req.params.get("turbidity_ntu"),
         nitrate_ppm=req.params.get("nitrate_ppm"),
+        nitrite_ppm=req.params.get("nitrite_ppm"),
+        hardness_ppm=req.params.get("hardness_ppm"),
+        iron_ppm=req.params.get("iron_ppm"),
         confidence_score=1.0,
     )
     
@@ -68,6 +71,52 @@ def cv_submissions(req: ManualSubmissionRequest):
     )
     
     return result
+
+class ChatMessageRequest(BaseModel):
+    message: str
+    history: Optional[list[dict]] = None
+    scenario: Optional[str] = None
+    result_id: Optional[str] = None
+    context: Optional[dict] = None
+
+from fastapi.responses import StreamingResponse
+import json
+from agents.chat_agent import get_chat_agent
+
+@app.post("/api/chat/stream")
+async def chat_stream(req: ChatMessageRequest):
+    context_str = ""
+    if req.context:
+        context_str = f"\n\nCURRENT DASHBOARD CONTEXT:\n{json.dumps(req.context, indent=2)}\n\n"
+        
+    system_prompt = (
+        "You are an agentic water safety educator. Answer the user's questions about water safety in plain language. "
+        "Keep it to a maximum of 4 short, actionable sentences. No emojis. "
+        "You have access to tools to search for guidelines, web searches, or community risk trends if the user asks something outside the current dashboard context. "
+        "If the user asks you to modify or update the dashboard parameters (e.g. pH, turbidity, chlorine), "
+        "you MUST append a command block to the VERY END of your response in this exact format: "
+        "[UPDATE_PARAMS: {\"parameter_name\": value}]. "
+        "Use valid JSON inside the brackets. Available keys: ph, chlorine_residual_ppm, turbidity_ntu, nitrate_ppm, nitrite_ppm, hardness_ppm, iron_ppm."
+        f"{context_str}"
+    )
+    
+    async def generate():
+        try:
+            agent = get_chat_agent(system_prompt)
+            messages = req.history or []
+            messages.append({"role": "user", "content": req.message})
+            
+            async for event in agent.astream_events({"messages": messages}, version="v2"):
+                if event["event"] == "on_chat_model_stream":
+                    if event["metadata"].get("langgraph_node") == "agent":
+                        chunk = event["data"]["chunk"]
+                        if chunk.content and not chunk.tool_call_chunks:
+                            text = chunk.content if isinstance(chunk.content, str) else str(chunk.content)
+                            yield f"data: {json.dumps({'text': text})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': f'LLM is currently unavailable: {e}'})}\n\n"
+    
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 @app.post("/api/analyze")
 async def analyze_photos(
