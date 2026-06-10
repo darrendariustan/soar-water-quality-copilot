@@ -3,15 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Bot } from "lucide-react";
-import type { ChatMessage, ScenarioId } from "@/types";
+import type { ChatMessage, ScenarioId, WaterTestResult } from "@/types";
 import { sendChatMessage } from "@/lib/api";
 import { initialChat } from "@/lib/mock-data";
 
 interface ChatAssistantProps {
   activeScenario: ScenarioId | null;
+  result?: WaterTestResult | null;
+  onUpdateParams?: (params: Record<string, number>) => void;
 }
 
-export function ChatAssistant({ activeScenario }: ChatAssistantProps) {
+export function ChatAssistant({ activeScenario, result, onUpdateParams }: ChatAssistantProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(initialChat);
   const [input, setInput] = useState("");
@@ -34,17 +36,90 @@ export function ChatAssistant({ activeScenario }: ChatAssistantProps) {
     setInput("");
     setSending(true);
 
-    const reply = await sendChatMessage(userMsg.content, activeScenario ?? undefined);
+    const assistantId = `m-${Date.now() + 1}`;
     setMessages((prev) => [
       ...prev,
       {
-        id: `m-${Date.now() + 1}`,
+        id: assistantId,
         role: "assistant",
-        content: reply,
+        content: "",
         timestamp: new Date().toISOString(),
       },
     ]);
-    setSending(false);
+
+    try {
+      const contextDict = result ? {
+        risk_level: result.overallRisk,
+        parameters: result.parameters?.reduce((acc: any, p) => ({ ...acc, [p.name]: p.value }), {})
+      } : undefined;
+
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_URL}/api/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          message: userMsg.content,
+          history: messages.map(m => ({ role: m.role, content: m.content })),
+          scenario: activeScenario ?? undefined,
+          context: contextDict
+        }),
+      });
+
+      if (res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.text) {
+                    let extractedParams: Record<string, number> | null = null;
+                    
+                    setMessages((prev) => prev.map((msg) => {
+                      if (msg.id === assistantId) {
+                        let newContent = msg.content + parsed.text;
+                        const match = newContent.match(/\[UPDATE_PARAMS:\s*(\{.*?\})\s*\]/);
+                        if (match) {
+                          try {
+                            extractedParams = JSON.parse(match[1]);
+                            newContent = newContent.replace(match[0], "").trim();
+                          } catch (e) {}
+                        }
+                        return { ...msg, content: newContent };
+                      }
+                      return msg;
+                    }));
+
+                    if (extractedParams && onUpdateParams) {
+                      onUpdateParams(extractedParams);
+                    }
+                  } else if (parsed.error) {
+                    setMessages((prev) => prev.map((msg) => 
+                      msg.id === assistantId ? { ...msg, content: msg.content + "\n[Error: " + parsed.error + "]" } : msg
+                    ));
+                  }
+                } catch (e) {}
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+       setMessages((prev) => prev.map((msg) => 
+         msg.id === assistantId ? { ...msg, content: msg.content + "\n[Error: " + (err instanceof Error ? err.message : String(err)) + "]" } : msg
+       ));
+    } finally {
+      setSending(false);
+    }
   };
 
   return (

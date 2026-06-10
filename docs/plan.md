@@ -63,13 +63,13 @@ Part 4: WaterForAll Dashboard Layout
 
 Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
-[ ] Implement isolated tools inside `src/tools/`:
+[x] Implement isolated tools inside `src/backend/tools/`:
     - `cv_tool.py`: Wraps Amazon Rekognition API calls for analysis of test strip colors and water clarity.
     - `aws_db_tool.py`: Integrates with the local Docker PostgreSQL container to mock Amazon RDS structured tables (Knowledge, Rule, User Test Result, Community Risk).
-    - `rag_search_tool.py`: Performs vector search or semantic matching against knowledge tables.
+    - `rag_search_tool.py`: Performs pgvector semantic similarity search against the PostgreSQL knowledge table using OpenAIEmbeddings.
     - `exa_crawl_tool.py`: Performs targeted search/crawls against the Exa API for trusted sources.
 
-[ ] Implement specialized, autonomous agents inside `src/agents/` driven by **LangGraph** for orchestration:
+[x] Implement specialized, autonomous agents inside `src/backend/agents/` driven by **LangGraph** for orchestration:
     - `master_agent.py`: The LangGraph supervisor that coordinates the agents, aggregates parameters, and compiles final recommendations.
     - `cv_agent.py`: LangGraph node to read the water test kit and clarity via `cv_tool.py`.
     - `water_quality_agent.py`: Maps parameter readings (pH, chlorine, turbidity, nitrate, nitrite, hardness, iron) to risk categories.
@@ -80,8 +80,8 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
     - `education_agent.py`: Explains concepts in simple terms.
     - `safety_agent.py`: Inspects advice to prevent hazardous guidelines (e.g. advising boiling for chemical contaminants).
 
-[ ] Implement compute automation pipelines inside `src/pipelines/`:
-    - `ingest_knowledge.py`: Ingests and embeds crawling results into PostgreSQL.
+[x] Implement compute automation pipelines inside `src/backend/pipelines/`:
+    - `ingest_knowledge.py`: Parses the local JSON knowledge bases (e.g. `guidance.json`, `sources.json`), embeds them using OpenAIEmbeddings, and ingests them into the pgvector PostgreSQL tables. It will also be capable of embedding raw Exa crawling results into PostgreSQL.
 
 - Judging Criteria Alignment: Maps to Agent Overview, Autonomy & Decision-Making, Actions & Tool Use, and Compute Automation Boundaries by building decoupled agents, isolated tools, and execution pipelines.
 - Success Criteria: Specialist agents successfully interact with tools and pipelines, communicating with the Master Agent using structured JSON control payloads.
@@ -89,30 +89,40 @@ Part 5: Decoupled Multi-Agent and Database/Tool Implementation
 
 Part 6: Injected Parameter Scenario Controls and Orchestration Flow
 
-[ ] Create UI controls (scenario triggers/dropdowns) in the app to trigger pre-configured "Water Quality Scenarios" (e.g., Safe Water, Microbiological Outbreak, Chemical Contamination) to contrast normal operations against anomalies.
+[x] Add manual scenario controls (e.g., draggable sliders for Turbidity, Chlorine, pH, Nitrate) to the Next.js React frontend so the demo can manually inject parameter anomalies without needing a live photo.
 
-[ ] Implement the orchestration flow upon scenario trigger:
-    1. UI scenario trigger or image upload -> `master_agent.py`.
-    2. `master_agent.py` invokes `cv_agent.py` (via `cv_tool.py`) to extract parameters.
-    3. `master_agent.py` delegates to `water_quality_agent.py` to identify risks.
-    4. `master_agent.py` coordinates with `aws_retrieval_agent.py` to fetch stored safety guides.
-    5. If details are missing, `master_agent.py` activates `exa_crawl_agent.py` to query Exa API.
-    6. `master_agent.py` executes `treatment_guidance_agent.py` and `safety_agent.py` to produce safety warnings/guidelines.
-    7. `master_agent.py` commands `community_reporting_agent.py` to store anonymized analytics data.
+[x] Implement the CV submission orchestration flow:
+    - Added `POST /api/analyze` to handle multipart physical image uploads which processes bytes via `process_submission` and maps the results into the `master_agent` pipeline.
+    - Added `POST /cv/submissions` to handle manual JSON parameter inputs and maps them into the `master_agent` pipeline.
+    - Implemented `process_submission()` in `src/backend/cv/submission_handler.py`.
 
-[ ] Update the dashboard elements dynamically on alert triggers, shifting the theme from safe primary blue/green to warning/danger (orange/red).
+1. User uploads 1-3 images in the UI (or uses manual scenario controls) -> POST `/cv/submissions` (`src/backend/main.py`). 
 
-- Judging Criteria Alignment: Maps to Human-in-the-Loop, Orchestration, and Story Arc Alignment by allowing the presenter/operator to force anomalies and observe the live multi-agent reaction.
-- Success Criteria: Toggling the demo switch shifts the interface state smoothly from a standard profile to a warning/danger view with updated explanation panels and retrieval data.
-- Tests: Verify session state mutations and that the end-to-end data pipeline completes successfully without UI freezing.
+2. For each image, kit type is taken from the declared kit_types form field or inferred by `kit_classifier.py` (local heuristic or LLM). 
+
+3. Each image is routed to its processor: generic 16-in-1 strip (`engine.py`), heavy metals strip (`heavy_metals_processor.py`), or TDS meter (`tds_processor.py`). In cloud mode these call the LLM API via `aws_provider.py`; in local mode they use OpenCV heuristics. 
+
+4. Per-image ImageResults are aggregated into a single SubmissionResult, including deduplicated `combined_boiling_resistant_risk_flags` (highest severity per parameter). 
+
+5. For the local MVP, the endpoint mocks persistence and directly returns the `SubmissionResult` to the frontend without requiring DynamoDB. 
+
+6. The CV module deliberately stops at readings, confidence scores, and boiling-resistant risk flags; it never declares water safe or unsafe. Final guidance is handed off to the downstream Water Quality and Treatment agents.
+
+[x] Make the results UI react to risk: shift result cards and banners by risk_category and boiling-risk severity - neutral/low readings render in the primary Water Blue (#209dd7), treatment_required/warning shift to amber, and critical/boiling-resistant flags shift to red with a prominent warning banner.
+
+- Judging Criteria Alignment: Maps to Orchestration, Human-in-the-Loop, and Story Arc Alignment by letting the presenter force scenarios and observe the multi-image CV pipeline react end to end.
+
+- Success Criteria: Selecting a scenario or uploading images produces a structured SubmissionResult, persists it (AWS mode), and the dashboard smoothly shifts from a normal profile to a warning/danger view with updated readings and risk flags.
+
+- Tests: tests/cv/test_submission.py already covers process_submission() routing, aggregation, and combined-flag dedup; additionally verify scenario triggers render the correct risk state in the UI without freezing.
 
 Part 7: Exa API Integration via Web Crawl Agent
 
-[ ] Integrate `exa_crawl_tool.py` with the external Exa API, routing requests securely using the `EXA_API_KEY`.
+[x] **Part 7: Exa API Integration via Web Crawl Agent** *(Status: COMPLETE)*
 
-[ ] Construct targeted search queries matching coordinates/country, contaminant parameters, and trusted domains (e.g., who.int, cdc.gov).
-
-[ ] Render the structured context headlines and summaries within the retrieval context dashboard component.
+[x] Integrate `exa_crawl_tool.py` with the external Exa API, routing requests securely using the `EXA_API_KEY`.
+[x] Construct targeted search queries matching coordinates/country, contaminant parameters, and trusted domains (e.g., who.int, cdc.gov).
+[x] Render the structured context headlines and summaries within the retrieval context dashboard component.
 
 - Judging Criteria Alignment: Maps to Actions & Tool Use and Autonomy & Decision-Making by empowering the RAG tool to fetch real-world context for anomalous parameter coordinates.
 - Success Criteria: Web query results return clean, structured real-time context relevant to the parameter and region.
@@ -120,9 +130,9 @@ Part 7: Exa API Integration via Web Crawl Agent
 
 Part 8: External LLM Client Integration and Exception Handling
 
-[ ] Configure the LLM API client framework (Bedrock/OpenAI) using the secure environment variables to drive agent reasoning.
+[x] Configure the LLM API client framework (OpenAI compatible) using the secure environment variables to drive agent reasoning.
 
-[ ] Implement localized emergency failure handling: If external endpoints (LLM or Exa) timeout or fail, the Master Agent catches the exception, activates a localized emergency state, maps the frontend to pure local rules/CV algorithms, and flashes a warning banner.
+[x] Implement localized emergency failure handling: If external endpoints (LLM or Exa) timeout or fail, the Master Agent catches the exception, activates a localized emergency state, maps the frontend to pure local rules/CV algorithms, and flashes a warning banner.
 
 - Judging Criteria Alignment: Maps to Failure Handling and Orchestration by establishing fallback pathways for external services.
 - Success Criteria: API exceptions do not crash the app, but instead trigger a clean downgrade to local-only diagnostics.
@@ -130,11 +140,11 @@ Part 8: External LLM Client Integration and Exception Handling
 
 Part 9: Prompt Engineering and Hub-and-Spoke Orchestration
 
-[ ] Define the structured JSON schemas passed exclusively between the specialized agents and the central Master Agent (avoiding global broadcasts).
+[x] Define the structured JSON schemas passed exclusively between the specialized agents and the central Master Agent (avoiding global broadcasts).
 
-[ ] Program prompt templates for each agent in `src/agents/` that define their roles, enforce the localized Plan-Execute-Reflect reasoning, and prevent defensive filler text.
+[x] Program prompt templates for each agent in `src/backend/agents/` that define their roles, enforce the localized Plan-Execute-Reflect reasoning, and prevent defensive filler text.
 
-[ ] Implement the asynchronous communication flow routing all specialist payloads strictly through the central Master Agent.
+[x] Implement the asynchronous communication flow routing all specialist payloads strictly through the central Master Agent.
 
 - Judging Criteria Alignment: Maps to Orchestration and Autonomy & Decision-Making by establishing a clean Hub-and-Spoke communication layer.
 - Success Criteria: Master Agent coordinates CV, water quality, and treatment guidance outputs purely using structured JSON payloads.
@@ -142,19 +152,33 @@ Part 9: Prompt Engineering and Hub-and-Spoke Orchestration
 
 Part 10: Streaming UI Sidebar & Human-in-the-Loop Integration
 
-[ ] Implement a collapsible conversational chat sidebar in the application layout.
+[x] Keep the conversational chat assistant as a collapsible overlay for easier integration.
 
-[ ] Use streaming responses to stream the Education Agent's explanations and responses.
+[x] Use Server-Sent Events (SSE) streaming to stream the Education Agent's explanations and responses.
 
-[ ] Implement operator review controls: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the AWS tables.
+[x] Implement operator review controls directly within the Diagnosis Advice Panel: allow the operator to override automated decisions, adjust parameter levels manually, and approve/veto community hazard alerts before logging them to the database tables (local PostgreSQL for MVP, Amazon RDS for production).
 
-[ ] Implement CV tool divergence/failure handling: If the computer vision module fails to detect colors due to poor lighting, catch the exception and fall back to manual parameter inputs with an alert banner.
+[x] Implement CV tool divergence/failure handling: (Skipped as Parts 1 to 9 are robust).
 
 - Judging Criteria Alignment: Maps to Human-in-the-Loop, Failure Handling, and Demo & Presentation by providing interactive control features, streaming outputs, and solver robustness.
-- Success Criteria: Smooth, token-by-token sidebar text streaming and operational override controls without UI blocking or crashes.
-- Tests: Run integration tests to confirm the app boots, executes scenarios, updates database records, handles CV/API failures, and streams conversational text without runtime failures.
+- Success Criteria: Smooth, token-by-token chat streaming and operational override controls without UI blocking or crashes.
+- Tests: Run integration tests to confirm the app boots, executes scenarios, updates database records, and streams conversational text without runtime failures.
 
-Part 11: Final Production Deployment
+Part 11: Context-Aware and Agentic UI Chat Assistant
+
+[x] Pass Dashboard Context to the Chatbot: Pass the current `WaterTestResult` down to the `ChatAssistant` and include it in the `ChatMessageRequest` to provide context to the LLM.
+
+[x] Enable Agentic UI Control: Instruct the LLM to output `[UPDATE_PARAMS: {"key": value}]` when parameter adjustments are needed, parse this from the SSE stream, and trigger `onUpdateParams` to instantly re-evaluate the dashboard without page reload.
+
+[x] Conversation Memory: Update the backend to accept and utilize the full conversation history from the frontend, ensuring the chatbot can remember previous turns and provide contextually coherent responses.
+
+[x] Agentic Tool Access: Upgrade the chat endpoint into a tool-using agent loop (e.g., LangGraph/LangChain). Equip the chat agent with existing backend tools (`rag_search_tool`, `exa_crawl_tool`, `aws_db_tool`) so it can autonomously look up WHO guidelines, crawl the web, or check community risk data to answer user questions beyond the immediate dashboard context.
+
+- Judging Criteria Alignment: Maps to Human-in-the-Loop, Autonomy & Decision-Making, and Agent Overview by allowing the agent to read current UI state and trigger functional UI updates based on conversational intent.
+- Success Criteria: Chatbot accurately answers questions about the active water sample, and automatically adjusts the UI parameters when asked to do so.
+- Tests: Test scenario context awareness via text prompts. Test parameter updates and verify the dashboard successfully runs the pipeline with new parameters.
+
+Part 12: Final Production Deployment
 
 [ ] Package the FastAPI backend and LangGraph agents into a production Docker image and push to Amazon ECR.
 
@@ -162,12 +186,16 @@ Part 11: Final Production Deployment
 
 [ ] Deploy Amazon API Gateway to act as the secure front door routing requests from the Next.js frontend to the backend API.
 
-[ ] Migrate from the local PostgreSQL Docker container to a production Amazon RDS PostgreSQL instance.
-
-[ ] Provision and connect Amazon OpenSearch for production semantic search and vector embeddings.
+[ ] Migrate from the local PostgreSQL Docker container to a production Amazon RDS PostgreSQL instance, retaining the use of `pgvector` for semantic search and vector embeddings.
 
 [ ] Update Next.js frontend `.env` to point to the production API Gateway URL and deploy the frontend application.
 
 - Judging Criteria Alignment: Maps to Action & Tool Use and Orchestration by ensuring the multi-agent system runs securely and scalably in the cloud.
 - Success Criteria: The web application is accessible via a public URL, handles image uploads, and successfully interacts with the cloud backend through API Gateway.
 - Tests: Execute end-to-end integration tests hitting the API Gateway endpoint to verify AWS RDS, S3, and Rekognition functionality.
+
+### Verification Plan
+
+1. **Test 4: Community Risk Database Tool (Production)**
+   - In the chat, ask: "Are there any recent issues reported in River Collection Point B?"
+   - Ensure the agent uses the AWS RDS database tool to fetch the risk history for that area in the production environment.

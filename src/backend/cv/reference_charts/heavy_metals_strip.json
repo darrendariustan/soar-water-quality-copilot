@@ -1,0 +1,32 @@
+{
+  "kit_id": "heavy_metals_strip",
+  "kit_name": "Heavy Metals Screening Strip",
+  "kit_notes": "Screening tool only. Positive results must be confirmed by certified laboratory testing. Boiling does not remove heavy metals.",
+  "parameters": {
+    "lead": [
+      {"value": "not_detected", "unit": "screening", "rgb": [245, 245, 240], "hsv": [60, 10, 245], "risk_level": "low"},
+      {"value": "trace",        "unit": "screening", "rgb": [200, 180, 200], "hsv": [300,25, 200], "risk_level": "warning"},
+      {"value": "detected",     "unit": "screening", "rgb": [150, 80,  130], "hsv": [315,80, 150], "risk_level": "critical"}
+    ],
+    "mercury": [
+      {"value": "not_detected", "unit": "screening", "rgb": [245, 245, 240], "hsv": [60, 10, 245], "risk_level": "low"},
+      {"value": "trace",        "unit": "screening", "rgb": [210, 210, 170], "hsv": [60, 50, 210], "risk_level": "warning"},
+      {"value": "detected",     "unit": "screening", "rgb": [160, 160, 80],  "hsv": [60, 110,160], "risk_level": "critical"}
+    ],
+    "copper": [
+      {"value": "not_detected", "unit": "screening", "rgb": [245, 245, 240], "hsv": [60, 10, 245], "risk_level": "low"},
+      {"value": "trace",        "unit": "screening", "rgb": [180, 210, 220], "hsv": [195,50, 220], "risk_level": "warning"},
+      {"value": "detected",     "unit": "screening", "rgb": [60,  160, 180], "hsv": [190,155,180], "risk_level": "warning"}
+    ],
+    "cadmium": [
+      {"value": "not_detected", "unit": "screening", "rgb": [245, 245, 240], "hsv": [60, 10, 245], "risk_level": "low"},
+      {"value": "trace",        "unit": "screening", "rgb": [220, 230, 180], "hsv": [72, 55, 230], "risk_level": "warning"},
+      {"value": "detected",     "unit": "screening", "rgb": [150, 180, 80],  "hsv": [82, 130,180], "risk_level": "critical"}
+    ],
+    "chromium": [
+      {"value": "not_detected", "unit": "screening", "rgb": [245, 245, 240], "hsv": [60, 10, 245], "risk_level": "low"},
+      {"value": "trace",        "unit": "screening", "rgb": [200, 220, 200], "hsv": [120,30, 220], "risk_level": "warning"},
+      {"value": "detected",     "unit": "screening", "rgb": [80,  160, 80],  "hsv": [120,150,160], "risk_level": "critical"}
+    ]
+  }
+}

@@ -2,7 +2,7 @@
 
 ```text
 water-for-all/
-├── .env.example                # Blueprint for system keys (AWS, EXA, OPENAI/BEDROCK)
+├── .env.example                # Blueprint for system keys (AWS, EXA, OPENAI)
 ├── .gitignore                  # Strict filters blocking environment secrets, caches, and logs
 ├── agents.md                   # Master file defining the 9-agent orchestration system
 ├── README.md                   # Minimal deployment guides and core architectural summary
@@ -133,7 +133,7 @@ graph TD
     Compute -->|Store Raw Snapshots & Images| S3[(Amazon S3)]
     Compute -->|Query/Store Rules & Logs| RDS[(Amazon RDS PostgreSQL)]
     Compute -->|Semantic Vector Search| OS[(Amazon OpenSearch Service)]
-    Compute -->|Generate Safety Explanations| Bedrock[Amazon Bedrock / LLM API]
+    Compute -->|Generate Safety Explanations| LLM[LLM API (OpenAI / Local)]
     
     Exa[Exa Crawl API] -->|Web Crawled Data| Compute
 ```
@@ -143,6 +143,33 @@ graph TD
 ### Database Schema Design
 
 The database stores both structured and unstructured knowledge.
+
+#### Current Local MVP Schema (hackathon-db-1)
+
+For the local MVP, knowledge embeddings and structured metadata are stored directly in PostgreSQL using the `langchain_postgres` pgvector integration:
+
+```mermaid
+erDiagram
+    %% The main PostgreSQL Database Container
+    DATABASE ||--o{ LANGCHAIN_PG_COLLECTION : contains
+    DATABASE ||--o{ LANGCHAIN_PG_EMBEDDING : contains
+
+    LANGCHAIN_PG_COLLECTION {
+        uuid uuid PK
+        string name "water_knowledge"
+        jsonb cmetadata "null"
+    }
+
+    LANGCHAIN_PG_EMBEDDING {
+        uuid uuid PK
+        uuid collection_id FK "Maps to water_knowledge"
+        vector embedding "1536-dimensional array (from OpenAI)"
+        string document "Raw text of the guidance (Title, Summary, Steps)"
+        jsonb cmetadata "Metadata payload (Sources, Steps, Types)"
+    }
+```
+
+#### Full Deployment Schema
 
 ```mermaid
 erDiagram

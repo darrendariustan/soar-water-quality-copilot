@@ -1,0 +1,62 @@
+{
+  "kit_id": "generic_16_in_1",
+  "kit_name": "Generic 16-in-1 Drinking Water Strip",
+  "kit_notes": "This kit does not test for lead, arsenic, or fluoride. Use a specialised kit for heavy metal screening.",
+  "parameters": {
+    "nitrate": [
+      {"value": "0",   "unit": "mg/L", "rgb": [250, 245, 230], "hsv": [42, 40, 250],  "risk_level": "low"},
+      {"value": "10",  "unit": "mg/L", "rgb": [240, 200, 180], "hsv": [17, 100, 240], "risk_level": "low"},
+      {"value": "25",  "unit": "mg/L", "rgb": [230, 160, 120], "hsv": [20, 130, 230], "risk_level": "low"},
+      {"value": "50",  "unit": "mg/L", "rgb": [210, 100, 80],  "hsv": [8,  155, 210], "risk_level": "warning"},
+      {"value": "100", "unit": "mg/L", "rgb": [180, 60,  50],  "hsv": [3,  170, 180], "risk_level": "warning"},
+      {"value": "500", "unit": "mg/L", "rgb": [140, 30,  30],  "hsv": [0,  185, 140], "risk_level": "critical"}
+    ],
+    "nitrite": [
+      {"value": "0",    "unit": "mg/L", "rgb": [255, 255, 240], "hsv": [60, 15, 255], "risk_level": "low"},
+      {"value": "0.3",  "unit": "mg/L", "rgb": [255, 210, 210], "hsv": [0,  80, 255], "risk_level": "low"},
+      {"value": "1",    "unit": "mg/L", "rgb": [250, 160, 160], "hsv": [0, 115, 250], "risk_level": "warning"},
+      {"value": "3",    "unit": "mg/L", "rgb": [230, 100, 110], "hsv": [357,140, 230],"risk_level": "warning"},
+      {"value": "10",   "unit": "mg/L", "rgb": [200, 60,  80],  "hsv": [351,165, 200],"risk_level": "critical"}
+    ],
+    "pH": [
+      {"value": "6.0", "unit": "", "rgb": [255, 100, 60],  "hsv": [12, 204, 255], "risk_level": "warning"},
+      {"value": "6.5", "unit": "", "rgb": [255, 140, 60],  "hsv": [22, 204, 255], "risk_level": "neutral"},
+      {"value": "7.0", "unit": "", "rgb": [255, 180, 80],  "hsv": [30, 175, 255], "risk_level": "neutral"},
+      {"value": "7.5", "unit": "", "rgb": [200, 200, 60],  "hsv": [60, 204, 200], "risk_level": "neutral"},
+      {"value": "8.0", "unit": "", "rgb": [120, 200, 80],  "hsv": [96, 150, 200], "risk_level": "neutral"},
+      {"value": "8.5", "unit": "", "rgb": [60,  200, 100], "hsv": [110,178, 200], "risk_level": "warning"},
+      {"value": "9.0", "unit": "", "rgb": [40,  160, 140], "hsv": [170,178, 160], "risk_level": "warning"}
+    ],
+    "free_chlorine": [
+      {"value": "0",   "unit": "mg/L", "rgb": [255, 255, 255], "hsv": [0,   0,  255], "risk_level": "neutral"},
+      {"value": "0.5", "unit": "mg/L", "rgb": [255, 220, 230], "hsv": [348, 40, 255], "risk_level": "low"},
+      {"value": "1.0", "unit": "mg/L", "rgb": [255, 180, 210], "hsv": [340, 90, 255], "risk_level": "low"},
+      {"value": "2.0", "unit": "mg/L", "rgb": [240, 130, 190], "hsv": [325,130, 240], "risk_level": "neutral"},
+      {"value": "4.0", "unit": "mg/L", "rgb": [200, 80,  160], "hsv": [315,160, 200], "risk_level": "warning"},
+      {"value": "10",  "unit": "mg/L", "rgb": [160, 40,  130], "hsv": [308,185, 160], "risk_level": "warning"}
+    ],
+    "hardness": [
+      {"value": "0",   "unit": "mg/L CaCO3", "rgb": [255, 230, 220], "hsv": [10, 45,  255], "risk_level": "low"},
+      {"value": "25",  "unit": "mg/L CaCO3", "rgb": [220, 200, 220], "hsv": [300,35,  220], "risk_level": "low"},
+      {"value": "50",  "unit": "mg/L CaCO3", "rgb": [190, 170, 220], "hsv": [255,65,  220], "risk_level": "low"},
+      {"value": "120", "unit": "mg/L CaCO3", "rgb": [150, 130, 200], "hsv": [250,90,  200], "risk_level": "low"},
+      {"value": "250", "unit": "mg/L CaCO3", "rgb": [100, 90,  180], "hsv": [245,130, 180], "risk_level": "neutral"},
+      {"value": "500", "unit": "mg/L CaCO3", "rgb": [60,  50,  150], "hsv": [245,170, 150], "risk_level": "neutral"}
+    ],
+    "iron": [
+      {"value": "0",   "unit": "mg/L", "rgb": [250, 245, 235], "hsv": [42, 25,  250], "risk_level": "low"},
+      {"value": "0.3", "unit": "mg/L", "rgb": [245, 230, 170], "hsv": [52, 110, 245], "risk_level": "low"},
+      {"value": "0.5", "unit": "mg/L", "rgb": [230, 210, 100], "hsv": [52, 165, 230], "risk_level": "neutral"},
+      {"value": "1.0", "unit": "mg/L", "rgb": [215, 180, 60],  "hsv": [48, 195, 215], "risk_level": "neutral"},
+      {"value": "3.0", "unit": "mg/L", "rgb": [200, 140, 40],  "hsv": [37, 210, 200], "risk_level": "warning"},
+      {"value": "10",  "unit": "mg/L", "rgb": [180, 100, 20],  "hsv": [29, 220, 180], "risk_level": "warning"}
+    ],
+    "turbidity": [
+      {"value": "clear",         "unit": "", "rgb": [240, 248, 255], "hsv": [210, 25,  255], "risk_level": "low"},
+      {"value": "slightly_hazy", "unit": "", "rgb": [200, 210, 220], "hsv": [210, 45,  220], "risk_level": "neutral"},
+      {"value": "hazy",          "unit": "", "rgb": [160, 170, 180], "hsv": [210, 60,  180], "risk_level": "neutral"},
+      {"value": "cloudy",        "unit": "", "rgb": [120, 130, 140], "hsv": [210, 65,  140], "risk_level": "warning"},
+      {"value": "very_cloudy",   "unit": "", "rgb": [80,  90,  100], "hsv": [210, 75,  100], "risk_level": "warning"}
+    ]
+  }
+}

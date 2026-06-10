@@ -1,0 +1,36 @@
+{
+  "unit": "mg/L",
+  "note": "WHO guideline is 600 mg/L. EPA secondary standard is 500 mg/L. 1 ppm = 1 mg/L for TDS.",
+  "thresholds": [
+    {
+      "min": 0,    "max": 300,
+      "risk_category": "low",
+      "label": "Acceptable",
+      "message": "TDS within acceptable range."
+    },
+    {
+      "min": 301,  "max": 500,
+      "risk_category": "caution",
+      "label": "Caution",
+      "message": "Slightly elevated TDS. May affect taste. Monitor regularly."
+    },
+    {
+      "min": 501,  "max": 900,
+      "risk_category": "warning",
+      "label": "Warning",
+      "message": "High TDS. Water quality is poor. Treatment is recommended."
+    },
+    {
+      "min": 901,  "max": 1200,
+      "risk_category": "warning",
+      "label": "High Warning",
+      "message": "Very high TDS. Not suitable for regular consumption without treatment."
+    },
+    {
+      "min": 1201, "max": null,
+      "risk_category": "high",
+      "label": "Critical",
+      "message": "Extremely high TDS. Water is unsuitable for drinking."
+    }
+  ]
+}
