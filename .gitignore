@@ -54,3 +54,7 @@ Thumbs.db
 
 # Kiro specs / local agent workspace
 .kiro/
+
+# Frontend source: the Python "lib/" rule above must not ignore this real code
+!src/frontend/src/lib/
+!src/frontend/src/lib/**
