@@ -1,8 +1,10 @@
 # Use slim python image
 FROM python:3.12-slim
 
-# Install system dependencies required for psycopg2
-RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+# Install system dependencies required for psycopg2 and AWS RDS certs
+RUN apt-get update && apt-get install -y libpq-dev gcc wget && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /app && wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /app/global-bundle.pem
 
 # Install uv package manager
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
