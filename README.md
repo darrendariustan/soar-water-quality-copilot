@@ -1,6 +1,7 @@
 # WaterForAll: Agentic Water Safety Assistant
 
 Link here: https://waterforall.vercel.app/ 
+
 Presentation here: https://docs.google.com/presentation/d/1w-Vy2qsOnBcAD_Tf4H7KYE-eoyRj9Ezdwz0UV41TZAM/edit?usp=sharing 
 
 ## Project Overview
@@ -64,6 +65,36 @@ graph TD
     
     Exa[Exa Crawl API] -->|Web Crawled Data| ECS
 ```
+
+---
+
+## Instructions to Host on Docker
+
+Follow these simple steps to run the application on your own computer. You don't need any coding experience!
+
+**Step 1: Install Docker Desktop**
+1. Go to [Docker's official website](https://www.docker.com/products/docker-desktop/) and download Docker Desktop for your operating system (Windows or Mac).
+2. Install the application and open it. Ensure Docker is running (you should see a whale icon in your system tray or menu bar).
+
+**Step 2: Download the Project**
+1. Download this project code to your computer (if you are on GitHub, click the green **"Code"** button and select **"Download ZIP"**).
+2. Extract the ZIP file to a folder on your desktop or documents.
+
+**Step 3: Add Your Secret Keys**
+1. Open the extracted `water-for-all` folder. 
+2. Find the file named `.env.example` and rename it to exactly `.env` (make sure your computer doesn't accidentally save it as `.env.txt`).
+3. Open the `.env` file in a text editor (like Notepad or TextEdit) and fill in your API keys (like `OPENAI_API_KEY` and `EXA_API_KEY`). Save and close the file.
+
+**Step 4: Start the Server**
+1. Open the `scripts` folder inside the project.
+2. **If you are on Windows:** Double-click the `start-server.bat` file.
+3. **If you are on Mac/Linux:** Open your terminal, navigate to the `scripts` folder, and run `sh start-server.sh`.
+*(Note: The very first time you do this, it may take 5–10 minutes to download and build the system. Please be patient!)*
+
+**Step 5: Open the App**
+1. Once the setup completes, open your web browser (Chrome, Edge, Safari).
+2. Go to **[http://localhost:3000](http://localhost:3000)** to view the frontend application.
+3. To shut down the app later, simply run the `stop-server` script in the `scripts` folder.
 
 ---
 
