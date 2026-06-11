@@ -19,7 +19,6 @@ water-for-all/
 ├── .env.example                # Blueprint for system keys (AWS, EXA, OPENAI)
 ├── agents.md                   # Master file defining the 9-agent orchestration system
 ├── README.md                   # Deployment guides and core architectural summary
-├── docs/                       # Project planning, schema, and deployment runbooks
 ├── src/
 │   ├── frontend/               # Next.js / React Web Application (Deployed to Vercel)
 │   │   ├── package.json
@@ -103,35 +102,35 @@ Follow these simple steps to run the application on your own computer. You don't
 The system is designed as a master water safety agent supported by specialized sub-agents, orchestrated using **LangGraph**. All sub-agents route messages strictly through the central Master Agent using structured JSON control payloads, avoiding unpredictable global broadcasts.
 
 ```mermaid
-graph TD
+graph LR
     subgraph UI [User Interaction]
-        User[User App Input / Sliders] -->|Upload Photo & Parameters| Master[Master Water Safety Agent]
-        Master -->|Stream Safety Advice & Agentic UI Updates| User
+        User((User App))
     end
 
-    subgraph Hub [Central Coordinator]
-        Master
+    Master{Master Agent}
+
+    subgraph Specialists [Specialized Sub-Agents]
+        CV[Computer Vision]
+        WQ[Water Quality]
+        AWS_Agent[AWS Retrieval]
+        Exa[Exa Web Crawl]
+        Treat[Treatment]
+        Report[Reporting]
+        Edu[Education]
+        Safety[Safety Rules]
     end
 
-    subgraph Spokes [Specialized Sub-Agents]
-        CV[Computer Vision Agent]
-        WQ[Water Quality Interpretation Agent]
-        AWS_Agent[AWS Knowledge Retrieval Agent]
-        Exa[Exa Web Crawl Agent]
-        Treat[Treatment Guidance Agent]
-        Report[Community Reporting Agent]
-        Edu[Education Agent]
-        Safety[Safety & Compliance Agent]
-    end
+    User -->|Upload Photo| Master
+    Master -->|Stream Advice| User
 
-    Master <-->|1. Parse Image / Clarity| CV
-    Master <-->|2. Interpret Parameter Risks| WQ
-    Master <-->|3. Search Stored Context| AWS_Agent
-    Master <-->|4. Trigger Web Search| Exa
-    Master <-->|5. Generate Action Steps| Treat
-    Master <-->|6. Log Telemetry Trends| Report
-    Master <-->|7. Explain Chemistry Simply| Edu
-    Master <-->|8. Enforce Safety Gate| Safety
+    Master <-->|1. Parse Image| CV
+    Master <-->|2. Interpret Risks| WQ
+    Master <-->|3. Search DB| AWS_Agent
+    Master <-->|4. Live Search| Exa
+    Master <-->|5. Action Steps| Treat
+    Master <-->|6. Log Trends| Report
+    Master <-->|7. Explain| Edu
+    Master <-->|8. Enforce Gate| Safety
 ```
 
 ---
