@@ -54,3 +54,6 @@ Thumbs.db
 
 # Kiro specs / local agent workspace
 .kiro/
+
+# Documentation (Kept locally only)
+docs/
